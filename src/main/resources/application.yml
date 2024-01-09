@@ -22,13 +22,10 @@ spring:
 
 logging:
   level:
-    web: INFO
-    com.nebula.notescape.security.service: INFO
-#  pattern:
-#    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
-#    file: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+    web: TRACE
+    com.nebula.notescape.security: TRACE
   file:
-    name: /home/nebula/.var/log/notescape.log
+    name: notescape.log
 
   logback:
     rollingpolicy:
