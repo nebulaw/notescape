@@ -1,6 +1,8 @@
 package com.nebula.notescape.security;
 
 import com.nebula.notescape.jpa.Authority;
+import com.nebula.notescape.jpa.entity.User;
+import com.nebula.notescape.payload.request.LoginRequest;
 import lombok.Builder;
 import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,9 +15,25 @@ import java.util.List;
 @ToString
 public class UserDetailsImpl implements UserDetails {
 
-    private String username;
+    private String email;
     private String password;
     private Authority authority;
+
+    public static UserDetailsImpl of(LoginRequest loginRequest) {
+        return UserDetailsImpl.builder()
+                .email(loginRequest.getEmail())
+                .password(loginRequest.getPassword())
+                .authority(Authority.USER)
+                .build();
+    }
+
+    public static UserDetailsImpl of(User user) {
+        return UserDetailsImpl.builder()
+                .email(user.getEmail())
+                .password(user.getPassword())
+                .authority(user.getAuthority())
+                .build();
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -29,7 +47,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public String getUsername() {
-        return username;
+        return email;
     }
 
     @Override

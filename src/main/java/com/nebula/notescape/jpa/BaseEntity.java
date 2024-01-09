@@ -32,5 +32,5 @@ public abstract class BaseEntity {
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "RECORD_STATE", nullable = false)
     @JsonIgnore
-    protected RecordState recordState;
+    protected RecordState recordState = RecordState.ACTIVE;
 }

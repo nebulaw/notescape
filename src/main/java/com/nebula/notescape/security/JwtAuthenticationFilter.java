@@ -1,7 +1,6 @@
-package com.nebula.notescape.security.filter;
+package com.nebula.notescape.security;
 
 import com.nebula.notescape.jpa.repository.UserRepository;
-import com.nebula.notescape.security.service.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

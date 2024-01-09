@@ -1,4 +1,4 @@
-package com.nebula.notescape.security.service;
+package com.nebula.notescape.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

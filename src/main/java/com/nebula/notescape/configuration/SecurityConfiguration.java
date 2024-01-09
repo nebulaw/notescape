@@ -1,6 +1,6 @@
 package com.nebula.notescape.configuration;
 
-import com.nebula.notescape.security.filter.JwtAuthenticationFilter;
+import com.nebula.notescape.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

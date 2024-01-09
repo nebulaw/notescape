@@ -1,9 +1,8 @@
-package com.nebula.notescape.security.service;
+package com.nebula.notescape.security;
 
 import com.nebula.notescape.jpa.RecordState;
 import com.nebula.notescape.jpa.entity.User;
 import com.nebula.notescape.jpa.repository.UserRepository;
-import com.nebula.notescape.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,14 +20,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> userOptional = userRepository
-                .findByUsernameAndRecordState(username, RecordState.ACTIVE);
+                .findByEmailAndRecordState(username, RecordState.ACTIVE);
 
         if (userOptional.isEmpty()) {
             throw new UsernameNotFoundException("%s was not found"
                     .formatted(username));
         } else {
             return UserDetailsImpl.builder()
-                    .username(userOptional.get().getPassword())
+                    .email(userOptional.get().getPassword())
                     .password(userOptional.get().getPassword())
                     .authority(userOptional.get().getAuthority())
                     .build();
