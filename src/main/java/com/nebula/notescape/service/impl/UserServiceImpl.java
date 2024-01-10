@@ -3,11 +3,10 @@ package com.nebula.notescape.service.impl;
 import com.nebula.notescape.exception.IncorrectParameterException;
 import com.nebula.notescape.exception.UserAlreadyExistsException;
 import com.nebula.notescape.exception.UserNotFoundException;
-import com.nebula.notescape.jpa.RecordState;
-import com.nebula.notescape.jpa.entity.User;
-import com.nebula.notescape.jpa.repository.UserRepository;
 import com.nebula.notescape.payload.request.UserRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
+import com.nebula.notescape.persistence.dao.UserDao;
+import com.nebula.notescape.persistence.entity.User;
 import com.nebula.notescape.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,18 +19,17 @@ import java.util.Optional;
 @Service
 public class UserServiceImpl implements IUserService {
 
-    private final UserRepository userRepository;
+    private final UserDao userDao;
 
     @Override
     public ApiResponse getById(Long id) {
         if (id == null || id <= 0) {
             throw new IncorrectParameterException().parameter("id", id);
         } else {
-            Optional<User> userOptional = userRepository
-                    .findByIdAndRecordState(id, RecordState.ACTIVE);
+            Optional<User> userOptional = userDao.getById(id);
 
             if (userOptional.isEmpty()) {
-                throw new UserNotFoundException("User not found by id{%d}".formatted(id));
+                throw new UserNotFoundException(id);
             } else {
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)
@@ -46,11 +44,10 @@ public class UserServiceImpl implements IUserService {
         if (!StringUtils.hasText(username)) {
             throw new IncorrectParameterException().parameter("username", username);
         } else {
-            Optional<User> userOptional = userRepository
-                    .findByUsernameAndRecordState(username, RecordState.ACTIVE);
+            Optional<User> userOptional = userDao.getByUsername(username);
 
             if (userOptional.isEmpty()) {
-                throw new UserNotFoundException("'%s' not found".formatted(username));
+                throw new UserNotFoundException(username);
             } else {
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)
@@ -62,6 +59,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public ApiResponse get(String keyword, Integer page, Integer size, String[] sort) {
+
         return null;
     }
 
@@ -71,17 +69,16 @@ public class UserServiceImpl implements IUserService {
             throw new IncorrectParameterException().parameter("userRequest", "null");
         }
 
+        // Check if user exists
+        Optional<User> userOpt = userDao.getByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new UserNotFoundException(username);
+        }
+
         // usernames must match
         if (!username.equals(request.getUsername())) {
             throw new IncorrectParameterException()
                     .parameter("username", request.getUsername());
-        }
-
-        // Check if user exists
-        Optional<User> userOpt = userRepository
-                .findByUsernameAndRecordState(username, RecordState.ACTIVE);
-        if (userOpt.isEmpty()) {
-            throw new UserNotFoundException("'%s' was not found".formatted(username));
         }
 
         // If so then update fields
@@ -91,7 +88,7 @@ public class UserServiceImpl implements IUserService {
         if (StringUtils.hasText(request.getUsername()) &&
                 !request.getUsername().equals(user.getUsername())) {
             // When updating username we must check if it's possible
-            if (userRepository.existsByUsername(request.getUsername())) {
+            if (userDao.existsByUsername(request.getUsername())) {
                 throw new UserAlreadyExistsException(request.getUsername());
             }
 
@@ -135,7 +132,7 @@ public class UserServiceImpl implements IUserService {
             throw e;
         } else {
             // After updating fields we save it in the repo
-            user = userRepository.save(user);
+            user = userDao.save(user);
 
             // And return api response
             return ApiResponse.builder()
@@ -146,26 +143,34 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    public ApiResponse deleteById(Long id) {
+        if (id == null || id < 1) {
+            throw new IncorrectParameterException()
+                    .parameter("id", id);
+        } else if (userDao.existsById(id)) {
+            throw new UserNotFoundException(id);
+        } else {
+            userDao.deleteById(id);
+            return ApiResponse.builder()
+                    .status(HttpStatus.OK)
+                    .data("Successfully deleted by id{%d}".formatted(id))
+                    .build();
+        }
+    }
+
+    @Override
     public ApiResponse deleteByUsername(String username) {
         if (!StringUtils.hasText(username)) {
             throw new IncorrectParameterException()
                     .parameter("username", username);
+        } else if (userDao.existsByUsername(username)) {
+            throw new UserNotFoundException(username);
+        } else {
+            userDao.deleteByUsername(username);
+            return ApiResponse.builder()
+                    .status(HttpStatus.OK)
+                    .data("'%s' deleted successfully".formatted(username))
+                    .build();
         }
-
-        Optional<User> userOptional = userRepository
-                .findByUsernameAndRecordState(username, RecordState.ACTIVE);
-
-        if (userOptional.isEmpty()) {
-            throw new UserNotFoundException("'%s' not found".formatted(username));
-        }
-
-        User user = userOptional.get();
-        user.setRecordState(RecordState.ACTIVE);
-        user = userRepository.save(user);
-
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .data(user)
-                .build();
     }
 }

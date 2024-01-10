@@ -1,15 +1,14 @@
 package com.nebula.notescape.security;
 
 import com.nebula.notescape.exception.UserNotFoundException;
-import com.nebula.notescape.jpa.Authority;
-import com.nebula.notescape.jpa.RecordState;
-import com.nebula.notescape.jpa.entity.User;
-import com.nebula.notescape.jpa.repository.UserRepository;
 import com.nebula.notescape.payload.request.LoginRequest;
 import com.nebula.notescape.payload.request.RegisterRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
 import com.nebula.notescape.payload.response.AuthResponse;
 import com.nebula.notescape.payload.response.UserResponse;
+import com.nebula.notescape.persistence.Authority;
+import com.nebula.notescape.persistence.dao.UserDao;
+import com.nebula.notescape.persistence.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,7 +25,7 @@ import java.util.Optional;
 public class AuthenticationService {
 
     private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
+    private final UserDao userDao;
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
 
@@ -50,11 +49,7 @@ public class AuthenticationService {
         log.trace("Successfully generated token for {}", loginRequest.getEmail());
 
         // Grab information about user
-        Optional<User> userOptional = userRepository
-                .findByEmailAndRecordState(
-                        userDetails.getUsername(),
-                        RecordState.ACTIVE
-                );
+        Optional<User> userOptional = userDao.getByEmail(userDetails.getUsername());
 
         if (userOptional.isEmpty()) {
             log.error("{} not found in the user repository", loginRequest.getEmail());
@@ -83,7 +78,7 @@ public class AuthenticationService {
                 .build();
 
         // Save it in the user repository
-        user = userRepository.save(user);
+        user = userDao.save(user);
         log.debug("Successfully saved {} in the user repository", user.getEmail());
         log.info("{} registered successfully", registerRequest.getEmail());
 

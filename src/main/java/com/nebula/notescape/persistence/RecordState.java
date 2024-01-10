@@ -1,4 +1,4 @@
-package com.nebula.notescape.jpa;
+package com.nebula.notescape.persistence;
 
 public enum RecordState {
     ACTIVE,

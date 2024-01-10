@@ -1,4 +1,4 @@
-package com.nebula.notescape.jpa;
+package com.nebula.notescape.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

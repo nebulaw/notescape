@@ -1,8 +1,8 @@
 package com.nebula.notescape.security;
 
-import com.nebula.notescape.jpa.RecordState;
-import com.nebula.notescape.jpa.entity.User;
-import com.nebula.notescape.jpa.repository.UserRepository;
+import com.nebula.notescape.persistence.RecordState;
+import com.nebula.notescape.persistence.entity.User;
+import com.nebula.notescape.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

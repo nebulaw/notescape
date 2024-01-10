@@ -1,4 +1,4 @@
-package com.nebula.notescape.jpa;
+package com.nebula.notescape.persistence;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

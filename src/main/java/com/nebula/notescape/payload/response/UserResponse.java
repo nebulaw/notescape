@@ -1,6 +1,6 @@
 package com.nebula.notescape.payload.response;
 
-import com.nebula.notescape.jpa.entity.User;
+import com.nebula.notescape.persistence.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

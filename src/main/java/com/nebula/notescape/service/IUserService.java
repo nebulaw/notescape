@@ -13,6 +13,8 @@ public interface IUserService {
 
     ApiResponse update(String username, UserRequest userRequest);
 
+    ApiResponse deleteById(Long id);
+
     ApiResponse deleteByUsername(String username);
 
 }

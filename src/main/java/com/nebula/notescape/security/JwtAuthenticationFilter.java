@@ -1,6 +1,6 @@
 package com.nebula.notescape.security;
 
-import com.nebula.notescape.jpa.repository.UserRepository;
+import com.nebula.notescape.persistence.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,7 +1,7 @@
 package com.nebula.notescape.security;
 
-import com.nebula.notescape.jpa.Authority;
-import com.nebula.notescape.jpa.entity.User;
+import com.nebula.notescape.persistence.Authority;
+import com.nebula.notescape.persistence.entity.User;
 import com.nebula.notescape.payload.request.LoginRequest;
 import lombok.Builder;
 import lombok.ToString;

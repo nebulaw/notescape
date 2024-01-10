@@ -1,7 +1,7 @@
-package com.nebula.notescape.jpa.entity;
+package com.nebula.notescape.persistence.entity;
 
-import com.nebula.notescape.jpa.Authority;
-import com.nebula.notescape.jpa.BaseEntity;
+import com.nebula.notescape.persistence.Authority;
+import com.nebula.notescape.persistence.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

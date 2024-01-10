@@ -1,8 +1,8 @@
-package com.nebula.notescape.jpa.entity;
+package com.nebula.notescape.persistence.entity;
 
 
-import com.nebula.notescape.jpa.Access;
-import com.nebula.notescape.jpa.BaseEntity;
+import com.nebula.notescape.persistence.Access;
+import com.nebula.notescape.persistence.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Entity
+// @Entity
 public class Note extends BaseEntity {
     @Id
     @SequenceGenerator(name = "noteSeqGen", sequenceName = "NOTE_SEQ", allocationSize = 1)
