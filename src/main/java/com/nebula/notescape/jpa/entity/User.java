@@ -14,7 +14,9 @@ import lombok.*;
 @Table(name = "USERS")
 public class User extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(name = "userSeqGen", sequenceName = "USERS_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "userSeqGen")
+    @Column(name = "ID")
     private Long id;
 
     @Column(name = "EMAIL", nullable = false, unique = true)

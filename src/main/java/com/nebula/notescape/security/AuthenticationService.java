@@ -1,5 +1,6 @@
-package com.nebula.notescape.service;
+package com.nebula.notescape.security;
 
+import com.nebula.notescape.exception.UserNotFoundException;
 import com.nebula.notescape.jpa.Authority;
 import com.nebula.notescape.jpa.RecordState;
 import com.nebula.notescape.jpa.entity.User;
@@ -9,9 +10,6 @@ import com.nebula.notescape.payload.request.RegisterRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
 import com.nebula.notescape.payload.response.AuthResponse;
 import com.nebula.notescape.payload.response.UserResponse;
-import com.nebula.notescape.security.UserDetailsImpl;
-import com.nebula.notescape.exception.UserNotFoundException;
-import com.nebula.notescape.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -60,8 +58,7 @@ public class AuthenticationService {
 
         if (userOptional.isEmpty()) {
             log.error("{} not found in the user repository", loginRequest.getEmail());
-            throw new UserNotFoundException("%s not found"
-                    .formatted(userDetails.getUsername()));
+            throw new UserNotFoundException(userDetails);
         } else {
             log.trace("Successfully retrieved {} from the user repository", loginRequest.getEmail());
             log.info("{} authenticated successfully", loginRequest.getEmail());

@@ -3,9 +3,12 @@ package com.nebula.notescape.controller;
 import com.nebula.notescape.payload.request.LoginRequest;
 import com.nebula.notescape.payload.request.RegisterRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
-import com.nebula.notescape.service.AuthenticationService;
+import com.nebula.notescape.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 
 @RequiredArgsConstructor
