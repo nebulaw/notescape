@@ -1,6 +1,7 @@
 package com.nebula.notescape.security;
 
 import com.nebula.notescape.persistence.RecordState;
+import com.nebula.notescape.persistence.dao.UserDao;
 import com.nebula.notescape.persistence.entity.User;
 import com.nebula.notescape.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,19 +16,18 @@ import java.util.Optional;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final UserDao userDao;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> userOptional = userRepository
-                .findByEmailAndRecordState(username, RecordState.ACTIVE);
+        Optional<User> userOptional = userDao.getByEmail(username);
 
         if (userOptional.isEmpty()) {
             throw new UsernameNotFoundException("%s was not found"
                     .formatted(username));
         } else {
             return UserDetailsImpl.builder()
-                    .email(userOptional.get().getPassword())
+                    .email(userOptional.get().getEmail())
                     .password(userOptional.get().getPassword())
                     .authority(userOptional.get().getAuthority())
                     .build();

@@ -22,6 +22,14 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
 
+    public String parseToken(String str) {
+        if (!str.startsWith("Bearer ")) {
+            return "";
+        } else {
+            return str.split(" ")[1].trim();
+        }
+    }
+
     public Boolean isValid(String token, UserDetails userDetails) {
         return (userDetails.getUsername().equals(extractClaim(token, Claims::getSubject)))
                 && !extractClaim(token, Claims::getExpiration).before(new Date());

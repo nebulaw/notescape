@@ -28,6 +28,8 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/auth/**").permitAll();
                     auth.requestMatchers("/api/users/find/*").permitAll();
+                    auth.requestMatchers("/api/users/search").permitAll();
+                    auth.requestMatchers("/api/users/update").authenticated();
                     auth.anyRequest().authenticated();
                 })
                 .passwordManagement(pm -> {

@@ -1,12 +1,13 @@
 package com.nebula.notescape.controller;
 
+import com.nebula.notescape.payload.request.UserRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
 import com.nebula.notescape.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/users")
+@RequestMapping("/api/user")
 @RestController
 public class UserController {
 
@@ -17,12 +18,22 @@ public class UserController {
         return userService.getByUsername(username);
     }
 
-    @RequestMapping(method = RequestMethod.GET, value = "/search")
+    @GetMapping("/search")
     public ApiResponse get(
-            @RequestParam(name = "keyword", required = false) String keyword,
-            @RequestParam(name = "sort", required = false) String[] sort
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "8") Integer size,
+            @RequestParam(defaultValue = "username,asc") String[] sort
     ) {
-        return userService.get(keyword, 1, 2, sort);
+        return userService.get(keyword, page, size, sort);
+    }
+
+    @PutMapping("/update")
+    public ApiResponse update(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UserRequest userRequest
+    ) {
+        return userService.update(token, userRequest);
     }
 
 }

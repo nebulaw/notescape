@@ -5,21 +5,37 @@ import com.nebula.notescape.exception.UserAlreadyExistsException;
 import com.nebula.notescape.exception.UserNotFoundException;
 import com.nebula.notescape.payload.request.UserRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
+import com.nebula.notescape.payload.response.UserResponse;
 import com.nebula.notescape.persistence.dao.UserDao;
 import com.nebula.notescape.persistence.entity.User;
+import com.nebula.notescape.persistence.repository.UserRepository;
+import com.nebula.notescape.persistence.specification.UserSpecification;
+import com.nebula.notescape.security.JwtUtil;
+import com.nebula.notescape.service.BaseService;
 import com.nebula.notescape.service.IUserService;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
-public class UserServiceImpl implements IUserService {
+public class UserServiceImpl extends BaseService implements IUserService {
 
     private final UserDao userDao;
+    private final UserSpecification userSpecification;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
     @Override
     public ApiResponse getById(Long id) {
@@ -59,26 +75,38 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public ApiResponse get(String keyword, Integer page, Integer size, String[] sort) {
+        List<Sort.Order> orders = extractOrders(sort);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(orders));
 
-        return null;
+        List<UserResponse> userPage = userDao
+                .getByKeyword(keyword, pageable).stream()
+                .map(UserResponse::of)
+                .toList();
+        return ApiResponse.builder()
+                .status(HttpStatus.OK)
+                .data(userPage)
+                .build();
     }
 
     @Override
-    public ApiResponse update(String username, UserRequest request) {
+    public ApiResponse update(String token, UserRequest request) {
+        token = jwtUtil.parseToken(token);
+        String email = jwtUtil.extractClaim(token, Claims::getSubject);
+
         if (request == null) {
             throw new IncorrectParameterException().parameter("userRequest", "null");
         }
 
         // Check if user exists
-        Optional<User> userOpt = userDao.getByUsername(username);
+        Optional<User> userOpt = userDao.getByEmail(email);
         if (userOpt.isEmpty()) {
-            throw new UserNotFoundException(username);
+            throw new UserNotFoundException(email);
         }
 
-        // usernames must match
-        if (!username.equals(request.getUsername())) {
+        // we make sure emails match each other from request and token
+        if (!email.equals(request.getEmail())) {
             throw new IncorrectParameterException()
-                    .parameter("username", request.getUsername());
+                    .parameter("email", request.getEmail());
         }
 
         // If so then update fields
@@ -96,14 +124,8 @@ public class UserServiceImpl implements IUserService {
                     request.getUsername().length() > 30) {
                 e.parameter("username", request.getUsername());
             } else {
-                user.setUsername(username);
+                user.setUsername(request.getUsername());
             }
-        }
-
-        if (StringUtils.hasText(request.getEmail()) &&
-                !request.getEmail().equals(user.getEmail())) {
-            // TODO: validate email
-            user.setEmail(request.getEmail());
         }
 
         if (StringUtils.hasText(request.getFullName()) &&
@@ -132,12 +154,13 @@ public class UserServiceImpl implements IUserService {
             throw e;
         } else {
             // After updating fields we save it in the repo
-            user = userDao.save(user);
+            user.setUpdateDate(LocalDateTime.now());
+            user = userDao.update(user);
 
             // And return api response
             return ApiResponse.builder()
                     .status(HttpStatus.OK)
-                    .data(user)
+                    .data(UserResponse.of(user))
                     .build();
         }
     }
@@ -173,4 +196,5 @@ public class UserServiceImpl implements IUserService {
                     .build();
         }
     }
+
 }

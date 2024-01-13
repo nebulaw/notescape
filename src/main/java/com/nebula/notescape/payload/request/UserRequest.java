@@ -7,6 +7,7 @@ import lombok.ToString;
 @ToString
 public class UserRequest {
     private String username;
+    // user can't update email, it is given for validation between token and one
     private String email;
     private String fullName;
     private String about;

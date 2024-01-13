@@ -3,9 +3,14 @@ package com.nebula.notescape.persistence.dao;
 import com.nebula.notescape.persistence.RecordState;
 import com.nebula.notescape.persistence.entity.User;
 import com.nebula.notescape.persistence.repository.UserRepository;
+import com.nebula.notescape.persistence.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -13,6 +18,7 @@ import java.util.Optional;
 public class UserDao implements Dao<User, Long> {
 
     private final UserRepository userRepository;
+    private final UserSpecification userSpecification;
 
     @Override
     public User save(User entity) {
@@ -43,6 +49,17 @@ public class UserDao implements Dao<User, Long> {
         return userRepository.findByEmailAndRecordState(email, RecordState.ACTIVE);
     }
 
+    public Page<User> getByKeyword(String keyword) {
+        return getByKeyword(keyword, Pageable.unpaged());
+    }
+
+    public Page<User> getByKeyword(String keyword, Pageable pageable) {
+        Specification<User> specification = Specification
+                .where(userSpecification.isActive())
+                .and(userSpecification.hasKeyword(keyword));
+        return userRepository.findAll(specification, pageable);
+    }
+
     @Override
     public User update(User entity) {
         return userRepository.save(entity);
@@ -54,6 +71,7 @@ public class UserDao implements Dao<User, Long> {
                 .findByIdAndRecordState(id, RecordState.ACTIVE);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
+            user.setUpdateDate(LocalDateTime.now());
             user.setRecordState(RecordState.DELETED);
             userRepository.save(user);
         }
@@ -63,8 +81,10 @@ public class UserDao implements Dao<User, Long> {
         Optional<User> userOptional = getByUsername(username);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
+            user.setUpdateDate(LocalDateTime.now());
             user.setRecordState(RecordState.DELETED);
             userRepository.save(user);
         }
     }
+
 }
