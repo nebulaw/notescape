@@ -11,8 +11,9 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-// @Entity
+@Entity
 public class Note extends BaseEntity {
+
     @Id
     @SequenceGenerator(name = "noteSeqGen", sequenceName = "NOTE_SEQ", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "noteSeqGen")
@@ -23,7 +24,6 @@ public class Note extends BaseEntity {
     private Long movieId;
 
     @ManyToOne
-    @Column(name = "AUTHOR", updatable = false, nullable = false)
     private User author;
 
     @Lob
@@ -34,5 +34,10 @@ public class Note extends BaseEntity {
     @Column(name = "ACCESS", nullable = false)
     private Access access;
 
+    @Column(name = "LIKE_COUNT")
+    private Long likeCount;
+
+//    @ManyToOne
+//    private Note parentNote;
 
 }

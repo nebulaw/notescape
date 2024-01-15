@@ -30,6 +30,9 @@ public class SecurityConfiguration {
                     auth.requestMatchers("/api/users/find/*").permitAll();
                     auth.requestMatchers("/api/users/search").permitAll();
                     auth.requestMatchers("/api/users/update").authenticated();
+                    auth.requestMatchers("/api/notes/create").authenticated();
+                    auth.requestMatchers("/api/notes/find/*").authenticated();
+                    auth.requestMatchers("/api/notes/delete/*").authenticated();
                     auth.anyRequest().authenticated();
                 })
                 .passwordManagement(pm -> {

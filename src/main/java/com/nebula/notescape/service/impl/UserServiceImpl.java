@@ -170,7 +170,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
         if (id == null || id < 1) {
             throw new IncorrectParameterException()
                     .parameter("id", id);
-        } else if (userDao.existsById(id)) {
+        } else if (!userDao.existsById(id)) {
             throw new UserNotFoundException(id);
         } else {
             userDao.deleteById(id);
@@ -186,7 +186,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
         if (!StringUtils.hasText(username)) {
             throw new IncorrectParameterException()
                     .parameter("username", username);
-        } else if (userDao.existsByUsername(username)) {
+        } else if (!userDao.existsByUsername(username)) {
             throw new UserNotFoundException(username);
         } else {
             userDao.deleteByUsername(username);
