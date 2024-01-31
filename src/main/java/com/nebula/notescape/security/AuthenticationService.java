@@ -11,6 +11,7 @@ import com.nebula.notescape.persistence.dao.UserDao;
 import com.nebula.notescape.persistence.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -57,9 +58,9 @@ public class AuthenticationService {
         } else {
             log.trace("Successfully retrieved {} from the user repository", loginRequest.getEmail());
             log.info("{} authenticated successfully", loginRequest.getEmail());
-            return AuthResponse.builder()
-                    .user(UserResponse.of(userOptional.get()))
-                    .token(jwt)
+            return ApiResponse.builder()
+                    .data(new AuthResponse(userOptional.get(), jwt))
+                    .status(HttpStatus.OK)
                     .build();
         }
     }
@@ -88,9 +89,9 @@ public class AuthenticationService {
         log.trace("Successfully generated token for {}", registerRequest.getEmail());
 
         log.info("{} authenticated successfully", registerRequest.getEmail());
-        return AuthResponse.builder()
-                .user(UserResponse.of(user))
-                .token(jwt)
+        return ApiResponse.builder()
+                .data(new AuthResponse(user, jwt))
+                .status(HttpStatus.CREATED)
                 .build();
     }
 

@@ -1,26 +1,16 @@
 package com.nebula.notescape.payload.response;
 
+import com.nebula.notescape.persistence.entity.User;
+import lombok.Data;
+
+@Data
 public class AuthResponse {
+    private final UserResponse user;
+    private final String token;
 
-    private AuthResponse() {
-    }
-
-    public static AuthResponseBuilder builder() {
-        return new AuthResponseBuilder();
-    }
-
-    public static class AuthResponseBuilder extends ApiResponse.ApiResponseBuilder {
-
-        public AuthResponseBuilder token(String token) {
-            super.put("token", token);
-            return this;
-        }
-
-        public AuthResponseBuilder user(UserResponse userResponse) {
-            super.put("user", userResponse);
-            return this;
-        }
-
+    public AuthResponse(User user, String token) {
+        this.user = UserResponse.of(user);
+        this.token = token;
     }
 
 }
