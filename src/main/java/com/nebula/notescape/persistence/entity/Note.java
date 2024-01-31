@@ -3,8 +3,10 @@ package com.nebula.notescape.persistence.entity;
 
 import com.nebula.notescape.persistence.Access;
 import com.nebula.notescape.persistence.BaseEntity;
+import com.nebula.notescape.persistence.NoteType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.Length;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -17,27 +19,36 @@ public class Note extends BaseEntity {
     @Id
     @SequenceGenerator(name = "noteSeqGen", sequenceName = "NOTE_SEQ", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "noteSeqGen")
-    @Column(name = "ID")
     private Long id;
 
-    @Column(name = "MOVIE_ID", updatable = false)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private NoteType noteType = NoteType.NOTE;
+
+    @Column(updatable = false)
     private Long movieId;
+
+    @Column(nullable = false, updatable = false)
+    private String movieName;
 
     @ManyToOne
     private User author;
 
     @Lob
-    @Column(name = "CONTEXT", nullable = false)
+    @Column(nullable = false, length = Length.LONG)
     private String context;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "ACCESS", nullable = false)
-    private Access access;
+    @Column(nullable = false)
+    @Builder.Default
+    private Access access = Access.PRIVATE;
 
-    @Column(name = "LIKE_COUNT")
-    private Long likeCount;
+    @Builder.Default
+    private Long likeCount = 0L;
 
-//    @ManyToOne
-//    private Note parentNote;
+    @ManyToOne(optional = true)
+    @JoinColumn(updatable = false, nullable = true)
+    @Builder.Default
+    private Note parentNote = null;
 
 }

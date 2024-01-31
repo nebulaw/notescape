@@ -1,6 +1,7 @@
 package com.nebula.notescape.service.impl;
 
 import com.nebula.notescape.exception.IncorrectParameterException;
+import com.nebula.notescape.exception.NoteNotFoundException;
 import com.nebula.notescape.exception.UserNotFoundException;
 import com.nebula.notescape.payload.request.NoteRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
@@ -47,19 +48,18 @@ public class NoteServiceImpl implements INoteService {
 
         // TODO: validate noteRequest
         Optional<User> userOptional = userDao.getByEmail(email);
-//        Optional<Note> parentNote = noteRequest.getParentId() != null ?
-//                noteDao.getById(noteRequest.getParentId()) :
-//                Optional.empty();
+        Optional<Note> parentNote = noteDao.getById(noteRequest.getParentId());
 
         Note note = Note.builder()
                 .movieId(noteRequest.getMovieId())
-                .author(userOptional.orElseThrow(() -> {
-                    throw new UserNotFoundException(email);
-                }))
+                .movieName(noteRequest.getMovieName())
+                .noteType(noteRequest.getNoteType())
+                .author(userOptional.orElseThrow(() ->
+                        new UserNotFoundException(email)))
                 .context(noteRequest.getContext())
                 .access(noteRequest.getAccess())
-                .likeCount(0L)
-//                .parentNote(parentNote.orElse(null))
+                .likeCount(noteRequest.getLikeCount())
+                .parentNote(parentNote.orElse(null))
                 .build();
 
         note = noteDao.save(note);
@@ -89,7 +89,7 @@ public class NoteServiceImpl implements INoteService {
     }
 
     @Override
-    public ApiResponse delete(String token, Long id) {
+    public ApiResponse deleteById(String token, Long id) {
         if (id == null || id < 1) {
             throw new IncorrectParameterException()
                     .parameter("id", id);
@@ -99,8 +99,7 @@ public class NoteServiceImpl implements INoteService {
 
             Optional<Note> noteOptional = noteDao.getById(id);
             if (noteOptional.isEmpty()) {
-                // TODO: note not found exception
-                throw new ResourceNotFoundException();
+                throw new NoteNotFoundException(id);
             }
 
             String authorEmail = noteOptional.get().getAuthor().getEmail();

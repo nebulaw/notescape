@@ -11,31 +11,38 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "USERS")
+@Table(name = "users")
 public class User extends BaseEntity {
     @Id
     @SequenceGenerator(name = "userSeqGen", sequenceName = "USERS_SEQ", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "userSeqGen")
-    @Column(name = "ID")
     private Long id;
 
-    @Column(name = "EMAIL", nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "USERNAME", nullable = false, unique = true, length = 30)
+    @Column(nullable = false, unique = true, length = 30)
     private String username;
 
-    @Column(name = "FULL_NAME", length = 36)
+    @Column(length = 36)
     private String fullName;
 
-    @Column(name = "ABOUT", insertable = false, length = 240)
+    @Column(insertable = false, length = 240)
     private String about;
 
-    @Column(name = "IMG_URL")
     private String imgUrl;
 
-    @Column(name = "PASSWORD", nullable = false, length = 600)
+    @Column(nullable = false, length = 600)
     private String password;
+
+    @Builder.Default
+    private Integer noteCount = 0;
+
+    @Builder.Default
+    private Integer followingCount = 0;
+
+    @Builder.Default
+    private Integer followerCount = 0;
 
     @Enumerated(EnumType.STRING)
     private Authority authority;

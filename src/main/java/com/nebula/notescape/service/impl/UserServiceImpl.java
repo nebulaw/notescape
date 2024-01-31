@@ -74,7 +74,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
     }
 
     @Override
-    public ApiResponse get(String keyword, Integer page, Integer size, String[] sort) {
+    public ApiResponse getUsersByKeyword(String keyword, Integer page, Integer size, String[] sort) {
         List<Sort.Order> orders = extractOrders(sort);
         Pageable pageable = PageRequest.of(page, size, Sort.by(orders));
 

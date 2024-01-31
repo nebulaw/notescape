@@ -25,7 +25,7 @@ public class UserController {
             @RequestParam(defaultValue = "8") Integer size,
             @RequestParam(defaultValue = "username,asc") String[] sort
     ) {
-        return userService.get(keyword, page, size, sort);
+        return userService.getUsersByKeyword(keyword, page, size, sort);
     }
 
     @PutMapping("/update")

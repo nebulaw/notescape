@@ -9,6 +9,6 @@ public interface INoteService {
 
     ApiResponse getById(Long id);
 
-    ApiResponse delete(String token, Long id);
+    ApiResponse deleteById(String token, Long id);
 
 }

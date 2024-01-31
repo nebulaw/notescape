@@ -9,7 +9,7 @@ public interface IUserService {
 
     ApiResponse getByUsername(String username);
 
-    ApiResponse get(String keyword, Integer page, Integer size, String[] sort);
+    ApiResponse getUsersByKeyword(String keyword, Integer page, Integer size, String[] sort);
 
     ApiResponse update(String token, UserRequest userRequest);
 

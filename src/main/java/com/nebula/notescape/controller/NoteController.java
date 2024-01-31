@@ -31,7 +31,7 @@ public class NoteController {
             @RequestHeader(name = "Authorization") String token,
             @PathVariable Long id
     ) {
-        return noteService.delete(token, id);
+        return noteService.deleteById(token, id);
     }
 
 }

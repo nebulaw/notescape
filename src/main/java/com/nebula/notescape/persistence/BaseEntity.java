@@ -22,7 +22,6 @@ public abstract class BaseEntity {
     @JsonIgnore
     protected LocalDateTime createDate = LocalDateTime.now();
 
-
     @LastModifiedDate
     @Column(name = "UPDATE_DATE")
     @Temporal(TemporalType.TIMESTAMP)
