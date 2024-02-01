@@ -18,7 +18,7 @@ public class UserController {
         return userService.getByUsername(username);
     }
 
-    @GetMapping("/search")
+    @GetMapping("/discover")
     public ApiResponse get(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "0") Integer page,
@@ -31,9 +31,15 @@ public class UserController {
     @PutMapping("/update")
     public ApiResponse update(
             @RequestHeader("Authorization") String token,
+            @RequestParam(value = "userId") Long userId,
             @RequestBody UserRequest userRequest
     ) {
-        return userService.update(token, userRequest);
+        return userService.update(token, userId, userRequest);
+    }
+
+    @DeleteMapping("/delete")
+    public ApiResponse delete(@RequestParam(value = "userId") Long userId) {
+        return userService.deleteById(userId);
     }
 
 }

@@ -11,7 +11,7 @@ public interface IUserService {
 
     ApiResponse getUsersByKeyword(String keyword, Integer page, Integer size, String[] sort);
 
-    ApiResponse update(String token, UserRequest userRequest);
+    ApiResponse update(String token, Long id, UserRequest userRequest);
 
     ApiResponse deleteById(Long id);
 

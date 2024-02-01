@@ -16,15 +16,13 @@ import com.nebula.notescape.service.IUserService;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -75,25 +73,26 @@ public class UserServiceImpl extends BaseService implements IUserService {
 
     @Override
     public ApiResponse getUsersByKeyword(String keyword, Integer page, Integer size, String[] sort) {
-        List<Sort.Order> orders = extractOrders(sort);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(orders));
-
-        List<UserResponse> userPage = userDao
-                .getByKeyword(keyword, pageable).stream()
-                .map(UserResponse::of)
-                .toList();
+        Pageable pageable = createPageable(page - 1, size, sort);
+        Page<User> userPage = userDao.getByKeyword(keyword, pageable);
         return ApiResponse.builder()
                 .status(HttpStatus.OK)
-                .data(userPage)
+                .data(userPage.stream()
+                        .map(UserResponse::of)
+                        .toList())
+                .put("page", page)
+                .put("totalPages", userPage.getTotalPages())
+                .put("size", userPage.getSize())
                 .build();
     }
 
     @Override
-    public ApiResponse update(String token, UserRequest request) {
+    public ApiResponse update(String token, Long id, UserRequest request) {
         token = jwtUtil.parseToken(token);
         String email = jwtUtil.extractClaim(token, Claims::getSubject);
 
         if (request == null) {
+            log.error("Null parameter userRequest");
             throw new IncorrectParameterException().parameter("userRequest", "null");
         }
 
@@ -158,6 +157,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
             user = userDao.update(user);
 
             // And return api response
+            log.info("Updated user={}", user.toString());
             return ApiResponse.builder()
                     .status(HttpStatus.OK)
                     .data(UserResponse.of(user))
@@ -174,6 +174,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
             throw new UserNotFoundException(id);
         } else {
             userDao.deleteById(id);
+            log.info("Deleted user by id={}", id);
             return ApiResponse.builder()
                     .status(HttpStatus.OK)
                     .data("Successfully deleted by id{%d}".formatted(id))

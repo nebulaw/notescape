@@ -11,6 +11,10 @@ public class ApiResponse extends HashMap<String, Object> {
         super(map);
     }
 
+    public static ApiResponse empty() {
+        return ApiResponse.builder().build();
+    }
+
     public static ApiResponseBuilder builder() {
         return new ApiResponseBuilder();
     }

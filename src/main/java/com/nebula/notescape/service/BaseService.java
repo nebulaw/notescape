@@ -1,5 +1,7 @@
 package com.nebula.notescape.service;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
@@ -27,6 +29,10 @@ public abstract class BaseService {
         }
 
         return orders;
+    }
+
+    protected Pageable createPageable(Integer page, Integer size, String[] sort) {
+        return PageRequest.of(page, size, Sort.by(extractOrders(sort)));
     }
 
 }

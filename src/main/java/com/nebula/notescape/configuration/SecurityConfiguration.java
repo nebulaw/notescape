@@ -25,15 +25,21 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
                 })
-                .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/users/find/*").permitAll();
-                    auth.requestMatchers("/api/users/search").permitAll();
-                    auth.requestMatchers("/api/users/update").authenticated();
-                    auth.requestMatchers("/api/notes/create").authenticated();
-                    auth.requestMatchers("/api/notes/find/*").authenticated();
-                    auth.requestMatchers("/api/notes/delete/*").authenticated();
-                    auth.anyRequest().authenticated();
+                .authorizeHttpRequests(authManager -> {
+                    authManager
+                            .requestMatchers("/api/auth/**").permitAll()
+                            .requestMatchers("/api/users/find/*").permitAll()
+                            .requestMatchers("/api/users/discover").permitAll()
+                            .requestMatchers("/api/users/update").authenticated();
+
+                    authManager
+                            .requestMatchers("/api/notes/find/*").permitAll()
+                            .requestMatchers("/api/notes/create").authenticated()
+                            .requestMatchers("/api/notes/delete/*").authenticated()
+                            .requestMatchers("/api/notes/private").authenticated()
+                            .requestMatchers("/api/notes/discover/**").permitAll();
+
+                    authManager.anyRequest().authenticated();
                 })
                 .passwordManagement(pm -> {
                     pm.changePasswordPage("/api/users/update-password");

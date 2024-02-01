@@ -26,12 +26,45 @@ public class NoteController {
         return noteService.getById(id);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @GetMapping("/discover/user")
+    public ApiResponse getNotesByUser(
+            @RequestParam(defaultValue = "-1") Long userId,
+            @RequestParam(defaultValue = "") String username,
+            @RequestParam(defaultValue = "") String email,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "8") Integer size,
+            @RequestParam(defaultValue = "createDate,desc") String[] sort
+    ) {
+        return noteService.getPublicNotesByUserId(userId, username, email, page, size, sort);
+    }
+
+    @GetMapping("/discover/movie")
+    public ApiResponse getNotesByMovieId(
+            @RequestParam Long movieId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "8") Integer size,
+            @RequestParam(defaultValue = "createDate,desc") String[] sort
+    ) {
+        return noteService.getPublicNotesByMovieId(movieId, page, size, sort);
+    }
+
+    @GetMapping("/private")
+    public ApiResponse getPrivateNotesByUserId(
+            @RequestHeader(name = "Authorization") String token,
+            @RequestParam(defaultValue = "") Long userId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "8") Integer size,
+            @RequestParam(defaultValue = "createDate,desc") String[] sort
+    ) {
+        return noteService.getPrivateNotesByUserId(token, userId, page, size, sort);
+    }
+
+    @DeleteMapping("/delete")
     public ApiResponse delete(
             @RequestHeader(name = "Authorization") String token,
-            @PathVariable Long id
+            @RequestParam(name = "userId") Long userId
     ) {
-        return noteService.deleteById(token, id);
+        return noteService.deleteById(token, userId);
     }
 
 }
