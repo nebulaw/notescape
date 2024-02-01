@@ -1,5 +1,6 @@
 package com.nebula.notescape.service.impl;
 
+import com.nebula.notescape.exception.CustomMessageException;
 import com.nebula.notescape.exception.IncorrectParameterException;
 import com.nebula.notescape.exception.NoteNotFoundException;
 import com.nebula.notescape.exception.UserNotFoundException;
@@ -20,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -45,8 +45,7 @@ public class NoteServiceImpl extends BaseService implements INoteService {
         String email = jwtUtil.extractClaim(token, Claims::getSubject);
 
         if (!email.equals(noteRequest.getEmail())) {
-            throw new IncorrectParameterException()
-                    .parameter("email", noteRequest.getEmail());
+            throw new CustomMessageException("Invalid email provided", HttpStatus.BAD_REQUEST);
         }
 
         // TODO: validate noteRequest
@@ -85,30 +84,35 @@ public class NoteServiceImpl extends BaseService implements INoteService {
             return ApiResponse.builder()
                     .status(HttpStatus.OK)
                     .data(NoteResponse.of(noteOptional.orElseThrow(() ->
-                            new NoteNotFoundException(id))))
+                            new NoteNotFoundException())))
                     .build();
         }
     }
 
     @Override
-    public ApiResponse getPublicNotesByUserId(Long id, String email, String username, Integer page, Integer size, String[] sort) {
-        Optional<User> userOptional = Optional.empty();
-
-        if (id >= 1L && !StringUtils.hasText(email) && !StringUtils.hasText(username)) {
-            userOptional = userDao.getById(id);
-        } else if (StringUtils.hasText(email)) {
-            userOptional = userDao.getByUsername(email);
-        } else if (StringUtils.hasText(username)) {
-            userOptional = userDao.getByUsername(username);
-        }
-
-        if (userOptional.isEmpty()) {
-            throw new UserNotFoundException(id);
-        }
+    public ApiResponse getAllNotesByUser(Long userId, String email, String username, Integer page, Integer size, String[] sort) {
+        User user = extractUserFromIdentifiers(userId, email, username);
 
         Pageable pageable = createPageable(page - 1, size, sort);
         Page<Note> notePage = noteDao
-                .getPublicNotesByUser(userOptional.get(), pageable);
+                .getAllNotesByUser(user, pageable);
+
+        return ApiResponse.builder()
+                .data(notePage.stream().map(NoteResponse::of).toList())
+                .status(HttpStatus.OK)
+                .put("page", page)
+                .put("totalPages", notePage.getTotalPages())
+                .put("size", notePage.getContent().size())
+                .build();
+    }
+
+    @Override
+    public ApiResponse getPublicNotesByUserId(Long id, String email, String username, Integer page, Integer size, String[] sort) {
+        User user = extractUserFromIdentifiers(id, email, username);
+
+        Pageable pageable = createPageable(page - 1, size, sort);
+        Page<Note> notePage = noteDao
+                .getPublicNotesByUser(user, pageable);
 
         return ApiResponse.builder()
                 .data(notePage.stream().map(NoteResponse::of).toList())
@@ -141,14 +145,14 @@ public class NoteServiceImpl extends BaseService implements INoteService {
         } else {
             Optional<User> userOptional = userDao.getById(userId);
             if (userOptional.isEmpty()) {
-                throw new UserNotFoundException(userId);
+                throw new UserNotFoundException();
             }
             token = jwtUtil.parseToken(token);
             // validate user authority
             UserDetails userDetails = userDetailsService
                     .loadUserByUsername(userOptional.get().getEmail());
             if (!jwtUtil.isValid(token, userDetails)) {
-                throw new BadCredentialsException("Invalid token");
+                throw new CustomMessageException("Invalid or expired token", HttpStatus.BAD_REQUEST);
             }
 
             // create page
@@ -181,12 +185,12 @@ public class NoteServiceImpl extends BaseService implements INoteService {
             Optional<Note> noteOptional = noteDao.getById(id);
             if (noteOptional.isEmpty()) {
                 log.info("Note was not found by noteId={}", id);
-                throw new NoteNotFoundException(id);
+                throw new NoteNotFoundException();
             }
 
             String authorEmail = noteOptional.get().getAuthor().getEmail();
             if (!email.equals(authorEmail)) {
-                throw new BadCredentialsException("Token email does not match request email");
+                throw new CustomMessageException("Invalid email provided", HttpStatus.BAD_REQUEST);
             } else {
                 noteDao.deleteById(id);
                 log.info("User='{}' deleted note={}",
@@ -198,6 +202,35 @@ public class NoteServiceImpl extends BaseService implements INoteService {
 
             }
         }
+    }
+
+    private User extractUserFromIdentifiers(Long userId, String email, String username) {
+        Optional<User> userOptional = Optional.empty();
+
+        if (userId >= 1L && !StringUtils.hasText(email) &&
+                !StringUtils.hasText(username)) {
+            userOptional = userDao.getById(userId);
+        } else if (StringUtils.hasText(email)) {
+            userOptional = userDao.getByUsername(email);
+        } else if (StringUtils.hasText(username)) {
+            userOptional = userDao.getByUsername(username);
+        }
+
+        if (userOptional.isEmpty()) {
+            if (userId >= 1L) {
+                throw new UserNotFoundException();
+            } else if (StringUtils.hasText(email) ||
+                    StringUtils.hasText(username)) {
+                throw new UserNotFoundException(
+                        StringUtils.hasText(email) ? email : username);
+            } else {
+                throw new CustomMessageException(
+                        "You must provide userId, email, or username",
+                        HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        return userOptional.get();
     }
 
 }

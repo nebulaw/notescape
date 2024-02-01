@@ -1,5 +1,6 @@
 package com.nebula.notescape.controller;
 
+import com.nebula.notescape.exception.CustomMessageException;
 import com.nebula.notescape.exception.IncorrectParameterException;
 import com.nebula.notescape.exception.UserAlreadyExistsException;
 import com.nebula.notescape.exception.UserNotFoundException;
@@ -41,6 +42,16 @@ public class ExceptionController {
         return ApiResponse.builder()
                 .status(HttpStatus.CONFLICT)
                 .error(e.getMessage())
+                .build();
+    }
+
+    @ResponseBody
+    @ExceptionHandler(CustomMessageException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ApiResponse handleCustomMessageException(CustomMessageException e) {
+        return ApiResponse.builder()
+                .error(e.getError())
+                .status(e.getStatus())
                 .build();
     }
 

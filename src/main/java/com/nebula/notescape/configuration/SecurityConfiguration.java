@@ -37,6 +37,7 @@ public class SecurityConfiguration {
                             .requestMatchers("/api/notes/create").authenticated()
                             .requestMatchers("/api/notes/delete/*").authenticated()
                             .requestMatchers("/api/notes/private").authenticated()
+                            .requestMatchers("/api/notes/user").authenticated()
                             .requestMatchers("/api/notes/discover/**").permitAll();
 
                     authManager.anyRequest().authenticated();
@@ -45,10 +46,9 @@ public class SecurityConfiguration {
                     pm.changePasswordPage("/api/users/update-password");
                 })
                 .exceptionHandling(exceptions -> {
-                    // Handling exceptions...
-                    // exceptions
-                    //        .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
-                    //        .accessDeniedHandler(new BearerTokenAccessDeniedHandler());
+//                     exceptions
+//                            .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+//                            .accessDeniedHandler(new BearerTokenAccessDeniedHandler());
                 })
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)

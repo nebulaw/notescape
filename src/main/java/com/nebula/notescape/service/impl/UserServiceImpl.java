@@ -1,5 +1,6 @@
 package com.nebula.notescape.service.impl;
 
+import com.nebula.notescape.exception.CustomMessageException;
 import com.nebula.notescape.exception.IncorrectParameterException;
 import com.nebula.notescape.exception.UserAlreadyExistsException;
 import com.nebula.notescape.exception.UserNotFoundException;
@@ -38,12 +39,12 @@ public class UserServiceImpl extends BaseService implements IUserService {
     @Override
     public ApiResponse getById(Long id) {
         if (id == null || id <= 0) {
-            throw new IncorrectParameterException().parameter("id", id);
+            throw new CustomMessageException("Invalid id provided", HttpStatus.BAD_REQUEST);
         } else {
             Optional<User> userOptional = userDao.getById(id);
 
             if (userOptional.isEmpty()) {
-                throw new UserNotFoundException(id);
+                throw new UserNotFoundException();
             } else {
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)
@@ -56,7 +57,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
     @Override
     public ApiResponse getByUsername(String username) {
         if (!StringUtils.hasText(username)) {
-            throw new IncorrectParameterException().parameter("username", username);
+            throw new CustomMessageException("Invalid username provided", HttpStatus.BAD_REQUEST);
         } else {
             Optional<User> userOptional = userDao.getByUsername(username);
 
@@ -104,14 +105,11 @@ public class UserServiceImpl extends BaseService implements IUserService {
 
         // we make sure emails match each other from request and token
         if (!email.equals(request.getEmail())) {
-            throw new IncorrectParameterException()
-                    .parameter("email", request.getEmail());
+            throw new CustomMessageException("Requested email not valid", HttpStatus.BAD_REQUEST);
         }
 
         // If so then update fields
         User user = userOpt.get();
-        IncorrectParameterException e = new IncorrectParameterException();
-
         if (StringUtils.hasText(request.getUsername()) &&
                 !request.getUsername().equals(user.getUsername())) {
             // When updating username we must check if it's possible
@@ -121,7 +119,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
 
             if (request.getUsername().length() < 4 ||
                     request.getUsername().length() > 30) {
-                e.parameter("username", request.getUsername());
+                throw new CustomMessageException("Username length must be between 4 and 30", HttpStatus.OK);
             } else {
                 user.setUsername(request.getUsername());
             }
@@ -129,16 +127,12 @@ public class UserServiceImpl extends BaseService implements IUserService {
 
         if (StringUtils.hasText(request.getFullName()) &&
                 !request.getFullName().equals(user.getFullName())) {
-            if (request.getFullName().length() < 4) {
-                e.parameter("fullName", request.getFullName());
-            } else {
-                user.setFullName(request.getFullName());
-            }
+            user.setFullName(request.getFullName());
         }
 
         if (!request.getAbout().equals(user.getAbout())) {
             if (request.getAbout().length() > 240) {
-                e.parameter("about", request.getAbout());
+                throw new CustomMessageException("About length must be less than 240", HttpStatus.BAD_REQUEST);
             } else {
                 user.setAbout(request.getAbout());
             }
@@ -149,29 +143,24 @@ public class UserServiceImpl extends BaseService implements IUserService {
             user.setImgUrl(request.getImgUrl());
         }
 
-        if (!e.getParameters().isEmpty()) {
-            throw e;
-        } else {
-            // After updating fields we save it in the repo
-            user.setUpdateDate(LocalDateTime.now());
-            user = userDao.update(user);
+        // After updating fields we save it in the repo
+        user.setUpdateDate(LocalDateTime.now());
+        user = userDao.update(user);
 
-            // And return api response
-            log.info("Updated user={}", user.toString());
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .data(UserResponse.of(user))
-                    .build();
-        }
+        // And return api response
+        log.info("Updated user={}", user.toString());
+        return ApiResponse.builder()
+                .status(HttpStatus.OK)
+                .data(UserResponse.of(user))
+                .build();
     }
 
     @Override
     public ApiResponse deleteById(Long id) {
         if (id == null || id < 1) {
-            throw new IncorrectParameterException()
-                    .parameter("id", id);
+            throw new CustomMessageException("Invalid id provided", HttpStatus.BAD_REQUEST);
         } else if (!userDao.existsById(id)) {
-            throw new UserNotFoundException(id);
+            throw new UserNotFoundException();
         } else {
             userDao.deleteById(id);
             log.info("Deleted user by id={}", id);
@@ -185,8 +174,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
     @Override
     public ApiResponse deleteByUsername(String username) {
         if (!StringUtils.hasText(username)) {
-            throw new IncorrectParameterException()
-                    .parameter("username", username);
+            throw new CustomMessageException("Invalid id provided", HttpStatus.BAD_REQUEST);
         } else if (!userDao.existsByUsername(username)) {
             throw new UserNotFoundException(username);
         } else {

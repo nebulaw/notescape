@@ -4,12 +4,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 public class UserNotFoundException extends RuntimeException {
 
-    public UserNotFoundException(Long id) {
-        super("User not found by id{%d}".formatted(id));
+    public UserNotFoundException() {
+        super("User not found");
     }
 
     public UserNotFoundException(String username) {
-        super("'%s' not found".formatted(username));
+        super("%s not found".formatted(username));
     }
 
     public UserNotFoundException(UserDetails userDetails) {

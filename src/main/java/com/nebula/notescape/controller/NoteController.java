@@ -27,19 +27,19 @@ public class NoteController {
     }
 
     @GetMapping("/discover/user")
-    public ApiResponse getNotesByUser(
+    public ApiResponse getPublicNotesByUser(
             @RequestParam(defaultValue = "-1") Long userId,
-            @RequestParam(defaultValue = "") String username,
             @RequestParam(defaultValue = "") String email,
+            @RequestParam(defaultValue = "") String username,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "8") Integer size,
             @RequestParam(defaultValue = "createDate,desc") String[] sort
     ) {
-        return noteService.getPublicNotesByUserId(userId, username, email, page, size, sort);
+        return noteService.getPublicNotesByUserId(userId, email, username, page, size, sort);
     }
 
     @GetMapping("/discover/movie")
-    public ApiResponse getNotesByMovieId(
+    public ApiResponse getPublicNotesByMovieId(
             @RequestParam Long movieId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "8") Integer size,
@@ -57,6 +57,18 @@ public class NoteController {
             @RequestParam(defaultValue = "createDate,desc") String[] sort
     ) {
         return noteService.getPrivateNotesByUserId(token, userId, page, size, sort);
+    }
+
+    @GetMapping("/user")
+    public ApiResponse getAllNotesByUser(
+            @RequestParam(defaultValue = "-1") Long userId,
+            @RequestParam(defaultValue = "") String email,
+            @RequestParam(defaultValue = "") String username,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "8") Integer size,
+            @RequestParam(defaultValue = "createDate,desc") String[] sort
+    ) {
+        return noteService.getAllNotesByUser(userId, email, username, page, size, sort);
     }
 
     @DeleteMapping("/delete")

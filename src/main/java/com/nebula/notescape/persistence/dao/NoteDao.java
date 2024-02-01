@@ -36,6 +36,13 @@ public class NoteDao implements Dao<Note, Long> {
         return noteRepository.findByIdAndRecordState(id, RecordState.ACTIVE);
     }
 
+    public Page<Note> getAllNotesByUser(User user, Pageable pageable) {
+        Specification<Note> specification = Specification
+                .where(noteSpecification.isActive())
+                .and(noteSpecification.authorEquals(user));
+        return noteRepository.findAll(specification, pageable);
+    }
+
     public Page<Note> getPublicNotesByUser(User user, Pageable pageable) {
         Specification<Note> specification = Specification
                 .where(noteSpecification.isActive())

@@ -1,11 +1,11 @@
 package com.nebula.notescape.security;
 
+import com.nebula.notescape.exception.CustomMessageException;
 import com.nebula.notescape.exception.UserNotFoundException;
 import com.nebula.notescape.payload.request.LoginRequest;
 import com.nebula.notescape.payload.request.RegisterRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
 import com.nebula.notescape.payload.response.AuthResponse;
-import com.nebula.notescape.payload.response.UserResponse;
 import com.nebula.notescape.persistence.Authority;
 import com.nebula.notescape.persistence.dao.UserDao;
 import com.nebula.notescape.persistence.entity.User;
@@ -17,8 +17,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -31,7 +36,7 @@ public class AuthenticationService {
     private final JwtUtil jwtUtil;
 
     public ApiResponse login(LoginRequest loginRequest) {
-        // TODO: validate login request
+        validateLoginRequest(loginRequest);
 
         // Authenticate by email and password
         authenticationManager.authenticate(
@@ -40,9 +45,7 @@ public class AuthenticationService {
                         loginRequest.getPassword()
                 )
         );
-        log.debug("AuthenticationManager successfully authenticated {}", loginRequest.getEmail());
-        // NOTE: Login request password encoding?
-        // loginRequest.setPassword(encoder.encode(loginRequest.getPassword()));
+        log.info("AuthenticationManager successfully authenticated {}", loginRequest.getEmail());
 
         // Generate authentication token
         UserDetails userDetails = UserDetailsImpl.of(loginRequest);
@@ -66,7 +69,7 @@ public class AuthenticationService {
     }
 
     public ApiResponse register(RegisterRequest registerRequest) {
-        // TODO: validate register request
+        validateRegisterRequest(registerRequest);
 
         // Build user from register request
         User user = User.builder()
@@ -93,6 +96,66 @@ public class AuthenticationService {
                 .data(new AuthResponse(user, jwt))
                 .status(HttpStatus.CREATED)
                 .build();
+    }
+
+    private void validateLoginRequest(LoginRequest loginRequest) {
+        List<String> errors = new ArrayList<>();
+
+        if (!StringUtils.hasText(loginRequest.getEmail())) {
+            errors.add("Email not provided");
+        } else {
+            Matcher matcher = Pattern
+                    .compile("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
+                    .matcher(loginRequest.getEmail());
+            if (!matcher.find()) {
+                errors.add("Invalid email");
+            }
+        }
+
+        if (!StringUtils.hasText(loginRequest.getPassword())) {
+            errors.add("Password not provided");
+        } else if (loginRequest.getPassword().length() > 16 ||
+                loginRequest.getPassword().length() < 8) {
+            errors.add("Password length must be 8-16 characters");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new CustomMessageException(errors, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validateRegisterRequest(RegisterRequest registerRequest) {
+        List<String> errors = new ArrayList<>();
+
+        // validate email
+        if (!StringUtils.hasText(registerRequest.getEmail())) {
+            errors.add("Email not provided");
+        } else {
+            Matcher matcher = Pattern
+                    .compile("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
+                    .matcher(registerRequest.getEmail());
+            if (!matcher.find()) {
+                errors.add("Invalid email");
+            }
+        }
+
+        if (!StringUtils.hasText(registerRequest.getUsername())) {
+            errors.add("Username not provided");
+        } else if (registerRequest.getUsername().length() > 30 ||
+                registerRequest.getUsername().length() < 4) {
+            errors.add("Username length must be 4-30 characters");
+        }
+
+        if (!StringUtils.hasText(registerRequest.getPassword())) {
+            errors.add("Password not provided");
+        } else if (registerRequest.getPassword().length() > 16 ||
+                registerRequest.getPassword().length() < 8) {
+            errors.add("Password length must be 8-16 characters");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new CustomMessageException(errors, HttpStatus.BAD_REQUEST);
+        }
     }
 
 }

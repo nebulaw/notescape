@@ -9,7 +9,9 @@ public interface INoteService {
 
     ApiResponse getById(Long id);
 
-    ApiResponse getPublicNotesByUserId(Long id, String username, String email, Integer page, Integer size, String[] sort);
+    ApiResponse getAllNotesByUser(Long userId, String email, String username, Integer page, Integer size, String[] sort);
+
+    ApiResponse getPublicNotesByUserId(Long id, String email, String username, Integer page, Integer size, String[] sort);
 
     ApiResponse getPublicNotesByMovieId(Long id, Integer page, Integer size, String[] sort);
 

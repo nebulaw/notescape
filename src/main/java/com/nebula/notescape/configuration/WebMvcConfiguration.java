@@ -19,7 +19,7 @@ public class WebMvcConfiguration {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
                 // Configure for user controller
-                registry.addMapping("/api/auth/*")
+                registry.addMapping("/api/auth/**")
                         .allowedOrigins(allowedOrigin)
                         .allowedMethods("POST");
                 registry.addMapping("/api/users/**")
