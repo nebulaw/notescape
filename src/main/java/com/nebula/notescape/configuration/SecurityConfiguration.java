@@ -40,6 +40,10 @@ public class SecurityConfiguration {
                             .requestMatchers("/api/notes/user").authenticated()
                             .requestMatchers("/api/notes/discover/**").permitAll();
 
+                    authManager
+                            .requestMatchers("/actuator/info").permitAll()
+                            .requestMatchers("/actuator/health").permitAll();
+
                     authManager.anyRequest().authenticated();
                 })
                 .passwordManagement(pm -> {
