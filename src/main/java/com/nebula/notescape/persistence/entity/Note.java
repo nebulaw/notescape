@@ -16,39 +16,39 @@ import org.hibernate.Length;
 @Entity
 public class Note extends BaseEntity {
 
-    @Id
-    @SequenceGenerator(name = "noteSeqGen", sequenceName = "NOTE_SEQ", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "noteSeqGen")
-    private Long id;
+  @Id
+  @SequenceGenerator(name = "noteSeqGen", sequenceName = "NOTE_SEQ", allocationSize = 1)
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "noteSeqGen")
+  private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private NoteType noteType = NoteType.NOTE;
+  @Enumerated(EnumType.STRING)
+  @Builder.Default
+  private NoteType noteType = NoteType.NOTE;
 
-    @Column(updatable = false)
-    private Long movieId;
+  @Column(updatable = false)
+  private Long movieId;
 
-    @Column(nullable = false, updatable = false)
-    private String movieName;
+  @Column(nullable = false, updatable = false)
+  private String movieName;
 
-    @ManyToOne
-    private User author;
+  @ManyToOne
+  private User author;
 
-    @Lob
-    @Column(nullable = false, length = Length.LONG)
-    private String context;
+  @Lob
+  @Column(nullable = false, length = Length.LONG)
+  private String context;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private Access access = Access.PRIVATE;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  @Builder.Default
+  private Access access = Access.PRIVATE;
 
-    @Builder.Default
-    private Long likeCount = 0L;
+  @Builder.Default
+  private Long likeCount = 0L;
 
-    @ManyToOne(optional = true)
-    @JoinColumn(updatable = false, nullable = true)
-    @Builder.Default
-    private Note parentNote = null;
+  @ManyToOne(optional = true)
+  @JoinColumn(updatable = false, nullable = true)
+  @Builder.Default
+  private Note parentNote = null;
 
 }

@@ -60,7 +60,7 @@ public class NoteServiceImpl extends BaseService implements INoteService {
                         new UserNotFoundException(email)))
                 .context(noteRequest.getContext())
                 .access(noteRequest.getAccess())
-                .likeCount(noteRequest.getLikeCount())
+                .likeCount(0L)
                 .parentNote(parentNote.orElse(null))
                 .build();
 

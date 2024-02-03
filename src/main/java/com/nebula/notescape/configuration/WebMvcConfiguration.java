@@ -1,6 +1,7 @@
 package com.nebula.notescape.configuration;
 
 import lombok.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -10,6 +11,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @EnableWebMvc
 public class WebMvcConfiguration {
+
+    @Value("${spring.boot.admin.client.url}")
+    private String adminServer;
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
@@ -28,6 +32,10 @@ public class WebMvcConfiguration {
                 registry.addMapping("/api/notes/**")
                         .allowedOrigins(allowedOrigin)
                         .allowedMethods("*");
+
+                registry.addMapping("/actuator/**")
+                    .allowedOrigins(adminServer)
+                    .allowedMethods("*");
             }
         };
     }

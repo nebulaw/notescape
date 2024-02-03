@@ -15,48 +15,48 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfiguration {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity
-                // Disable CSRF(Cross-Site Request Forgery) because of JWT Auth
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> {
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-                })
-                .authorizeHttpRequests(authManager -> {
-                    authManager
-                            .requestMatchers("/api/auth/**").permitAll()
-                            .requestMatchers("/api/users/find/*").permitAll()
-                            .requestMatchers("/api/users/discover").permitAll()
-                            .requestMatchers("/api/users/update").authenticated();
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+    return httpSecurity
+        // Disable CSRF(Cross-Site Request Forgery) because of JWT Auth
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> {
+          session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        })
+        .authorizeHttpRequests(authManager -> {
+          authManager
+              .requestMatchers("/api/auth/**").permitAll()
+              .requestMatchers("/api/users/find/*").permitAll()
+              .requestMatchers("/api/users/discover").permitAll()
+              .requestMatchers("/api/users/update").authenticated();
 
-                    authManager
-                            .requestMatchers("/api/notes/find/*").permitAll()
-                            .requestMatchers("/api/notes/create").authenticated()
-                            .requestMatchers("/api/notes/delete/*").authenticated()
-                            .requestMatchers("/api/notes/private").authenticated()
-                            .requestMatchers("/api/notes/user").authenticated()
-                            .requestMatchers("/api/notes/discover/**").permitAll();
+          authManager
+              .requestMatchers("/api/notes/find/*").permitAll()
+              .requestMatchers("/api/notes/create").authenticated()
+              .requestMatchers("/api/notes/delete/*").authenticated()
+              .requestMatchers("/api/notes/private").authenticated()
+              .requestMatchers("/api/notes/user").authenticated()
+              .requestMatchers("/api/notes/discover/**").permitAll();
 
-                    authManager
-                            .requestMatchers("/actuator/info").permitAll()
-                            .requestMatchers("/actuator/health").permitAll();
+          authManager
+              .requestMatchers("/actuator/**")
+              .permitAll();
 
-                    authManager.anyRequest().authenticated();
-                })
-                .passwordManagement(pm -> {
-                    pm.changePasswordPage("/api/users/update-password");
-                })
-                .exceptionHandling(exceptions -> {
+          authManager.anyRequest().authenticated();
+        })
+        .passwordManagement(pm -> {
+          pm.changePasswordPage("/api/users/update-password");
+        })
+        .exceptionHandling(exceptions -> {
 //                     exceptions
 //                            .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
 //                            .accessDeniedHandler(new BearerTokenAccessDeniedHandler());
-                })
-                .addFilterBefore(jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
+        })
+        .addFilterBefore(jwtAuthenticationFilter,
+            UsernamePasswordAuthenticationFilter.class)
+        .build();
+  }
 
 }
