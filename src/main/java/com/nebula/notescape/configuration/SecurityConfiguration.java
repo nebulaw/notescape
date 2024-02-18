@@ -41,6 +41,9 @@ public class SecurityConfiguration {
               .requestMatchers("/api/notes/discover/**").permitAll();
 
           authManager
+              .requestMatchers("/api/interactions/**").authenticated();
+
+          authManager
               .requestMatchers("/actuator/**")
               .permitAll();
 

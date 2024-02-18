@@ -2,6 +2,7 @@ package com.nebula.notescape.controller;
 
 import com.nebula.notescape.payload.request.UserRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
+import com.nebula.notescape.service.IInteractionService;
 import com.nebula.notescape.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -12,8 +13,9 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final IUserService userService;
+    private final IInteractionService interactionService;
 
-    @RequestMapping(method = RequestMethod.GET, value = "/find/{username}")
+    @GetMapping("/find/{username}")
     public ApiResponse getByUsername(@PathVariable String username) {
         return userService.getByUsername(username);
     }
@@ -40,6 +42,26 @@ public class UserController {
     @DeleteMapping("/delete")
     public ApiResponse delete(@RequestParam(value = "userId") Long userId) {
         return userService.deleteById(userId);
+    }
+
+    @GetMapping("/followings")
+    public ApiResponse getFollowingsByUserId(
+        @RequestParam Long userId,
+        @RequestParam(defaultValue = "1") Integer page,
+        @RequestParam(defaultValue = "8") Integer size,
+        @RequestParam(defaultValue = "createDate,desc") String[] sort
+    ) {
+        return interactionService.getFollowingsByUserId(userId, page, size, sort);
+    }
+
+    @GetMapping("/followers")
+    public ApiResponse getFollowersByUserId(
+        @RequestParam Long userId,
+        @RequestParam(defaultValue = "1") Integer page,
+        @RequestParam(defaultValue = "8") Integer size,
+        @RequestParam(defaultValue = "createDate,desc") String[] sort
+    ) {
+        return interactionService.getFollowersByUserId(userId, page, size, sort);
     }
 
 }

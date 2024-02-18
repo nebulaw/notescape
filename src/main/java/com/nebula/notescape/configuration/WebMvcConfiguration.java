@@ -32,6 +32,9 @@ public class WebMvcConfiguration {
                 registry.addMapping("/api/notes/**")
                         .allowedOrigins(allowedOrigin)
                         .allowedMethods("*");
+                registry.addMapping("/api/interactions/**")
+                        .allowedOrigins(allowedOrigin)
+                        .allowedMethods("*");
 
                 registry.addMapping("/actuator/**")
                     .allowedOrigins(adminServer)

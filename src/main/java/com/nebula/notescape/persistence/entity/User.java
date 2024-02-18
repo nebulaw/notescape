@@ -1,5 +1,6 @@
 package com.nebula.notescape.persistence.entity;
 
+import com.nebula.notescape.payload.request.RegisterRequest;
 import com.nebula.notescape.persistence.Authority;
 import com.nebula.notescape.persistence.BaseEntity;
 import jakarta.persistence.*;
@@ -46,5 +47,19 @@ public class User extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private Authority authority;
+
+    public static User of(RegisterRequest registerRequest) {
+        return User.builder()
+            .email(registerRequest.getEmail())
+            .username(registerRequest.getUsername())
+            .fullName(registerRequest.getFullName())
+            .password(registerRequest.getPassword())
+            .authority(Authority.USER)
+            .imgUrl("")
+            .noteCount(0)
+            .followerCount(0)
+            .followingCount(0)
+            .build();
+    }
 
 }

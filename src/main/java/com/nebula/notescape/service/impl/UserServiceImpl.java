@@ -1,9 +1,6 @@
 package com.nebula.notescape.service.impl;
 
-import com.nebula.notescape.exception.CustomMessageException;
-import com.nebula.notescape.exception.IncorrectParameterException;
-import com.nebula.notescape.exception.UserAlreadyExistsException;
-import com.nebula.notescape.exception.UserNotFoundException;
+import com.nebula.notescape.exception.*;
 import com.nebula.notescape.payload.request.UserRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
 import com.nebula.notescape.payload.response.UserResponse;
@@ -39,7 +36,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
     @Override
     public ApiResponse getById(Long id) {
         if (id == null || id <= 0) {
-            throw new CustomMessageException("Invalid id provided", HttpStatus.BAD_REQUEST);
+            throw new ApiException(Exceptions.INVALID_ID);
         } else {
             Optional<User> userOptional = userDao.getById(id);
 
@@ -48,7 +45,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
             } else {
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)
-                        .data(userOptional.get())
+                        .data(UserResponse.of(userOptional.get()))
                         .build();
             }
         }
@@ -57,7 +54,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
     @Override
     public ApiResponse getByUsername(String username) {
         if (!StringUtils.hasText(username)) {
-            throw new CustomMessageException("Invalid username provided", HttpStatus.BAD_REQUEST);
+            throw new ApiException(Exceptions.INVALID_USERNAME);
         } else {
             Optional<User> userOptional = userDao.getByUsername(username);
 
@@ -66,7 +63,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
             } else {
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)
-                        .data(userOptional.get())
+                        .data(UserResponse.of(userOptional.get()))
                         .build();
             }
         }
@@ -94,18 +91,18 @@ public class UserServiceImpl extends BaseService implements IUserService {
 
         if (request == null) {
             log.error("Null parameter userRequest");
-            throw new IncorrectParameterException().parameter("userRequest", "null");
+            throw new ApiException(Exceptions.INVALID_REQUEST_BODY);
         }
 
         // Check if user exists
         Optional<User> userOpt = userDao.getByEmail(email);
         if (userOpt.isEmpty()) {
-            throw new UserNotFoundException(email);
+            throw new ApiException(Exceptions.USER_NOT_FOUND);
         }
 
         // we make sure emails match each other from request and token
         if (!email.equals(request.getEmail())) {
-            throw new CustomMessageException("Requested email not valid", HttpStatus.BAD_REQUEST);
+            throw new ApiException(Exceptions.INVALID_EMAIL);
         }
 
         // If so then update fields
@@ -114,12 +111,12 @@ public class UserServiceImpl extends BaseService implements IUserService {
                 !request.getUsername().equals(user.getUsername())) {
             // When updating username we must check if it's possible
             if (userDao.existsByUsername(request.getUsername())) {
-                throw new UserAlreadyExistsException(request.getUsername());
+                throw new ApiException(Exceptions.USER_ALREADY_EXISTS);
             }
 
             if (request.getUsername().length() < 4 ||
                     request.getUsername().length() > 30) {
-                throw new CustomMessageException("Username length must be between 4 and 30", HttpStatus.OK);
+                throw new ApiException(Exceptions.INVALID_USERNAME_LENGTH);
             } else {
                 user.setUsername(request.getUsername());
             }
@@ -132,7 +129,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
 
         if (!request.getAbout().equals(user.getAbout())) {
             if (request.getAbout().length() > 240) {
-                throw new CustomMessageException("About length must be less than 240", HttpStatus.BAD_REQUEST);
+                throw new ApiException(Exceptions.INVALID_ABOUT_LENGTH);
             } else {
                 user.setAbout(request.getAbout());
             }

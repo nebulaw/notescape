@@ -12,5 +12,4 @@ public class AuthResponse {
         this.user = UserResponse.of(user);
         this.token = token;
     }
-
 }

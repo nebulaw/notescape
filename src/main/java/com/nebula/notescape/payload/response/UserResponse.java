@@ -11,21 +11,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UserResponse {
-    private Long id;
-    private String email;
-    private String username;
-    private String fullName;
-    private String about;
-    private String imgUrl;
+  private Long id;
+  private String email;
+  private String username;
+  private String fullName;
+  private String about;
+  private String imgUrl;
+  private Integer noteCount;
+  private Integer followingCount;
+  private Integer followerCount;
 
-    public static UserResponse of(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .username(user.getUsername())
-                .fullName(user.getFullName())
-                .about(user.getAbout())
-                .imgUrl(user.getImgUrl())
-                .build();
-    }
+  public static UserResponse of(User user) {
+    return UserResponse.builder()
+        .id(user.getId())
+        .email(user.getEmail())
+        .username(user.getUsername())
+        .fullName(user.getFullName())
+        .about(user.getAbout())
+        .imgUrl(user.getImgUrl())
+        .noteCount(user.getNoteCount())
+        .followingCount(user.getFollowingCount())
+        .followerCount(user.getFollowerCount())
+        .build();
+  }
 }
