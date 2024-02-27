@@ -44,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Obtain token string
         final String token = header.split(" ")[1].trim();
 
-        // Obtain username from token
+        // Obtain email from token
         final String email = jwtUtil.extractClaim(token, Claims::getSubject);
 
         // If token contains username and authentication is null
