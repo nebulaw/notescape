@@ -37,4 +37,20 @@ public class InteractionController {
     return interactionService.getRelationType(user1Id, user2Id);
   }
 
+  @PostMapping("/like")
+  public ApiResponse like(
+      @RequestParam(defaultValue = "-1") Long userId,
+      @RequestParam(defaultValue = "-1") Long noteId
+  ) {
+    return interactionService.like(userId, noteId);
+  }
+
+  @DeleteMapping("/unlike")
+  public ApiResponse unlike(
+      @RequestParam(defaultValue = "-1") Long userId,
+      @RequestParam(defaultValue = "-1") Long noteId
+  ) {
+    return interactionService.unlike(userId, noteId);
+  }
+
 }

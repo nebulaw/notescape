@@ -59,7 +59,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
             Optional<User> userOptional = userDao.getByUsername(username);
 
             if (userOptional.isEmpty()) {
-                throw new UserNotFoundException(username);
+                throw new ApiException(username + " was not found");
             } else {
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)

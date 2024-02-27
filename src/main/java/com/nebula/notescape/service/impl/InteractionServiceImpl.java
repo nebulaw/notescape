@@ -6,11 +6,15 @@ import com.nebula.notescape.payload.response.ApiResponse;
 import com.nebula.notescape.persistence.RecordState;
 import com.nebula.notescape.persistence.UserRelationType;
 import com.nebula.notescape.persistence.dao.FollowDao;
+import com.nebula.notescape.persistence.dao.LikeDao;
 import com.nebula.notescape.persistence.dao.NoteDao;
 import com.nebula.notescape.persistence.dao.UserDao;
 import com.nebula.notescape.persistence.entity.Follow;
+import com.nebula.notescape.persistence.entity.Like;
+import com.nebula.notescape.persistence.entity.Note;
 import com.nebula.notescape.persistence.entity.User;
 import com.nebula.notescape.persistence.key.FollowKey;
+import com.nebula.notescape.persistence.key.LikeKey;
 import com.nebula.notescape.service.BaseService;
 import com.nebula.notescape.service.IInteractionService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,7 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
   private final NoteDao noteDao;
   private final UserDao userDao;
+  private final LikeDao likeDao;
   private final FollowDao followDao;
 
   @Override
@@ -164,6 +169,58 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
         .put("page", page)
         .put("totalPages", followPage.getTotalPages())
         .put("size", followPage.getContent().size())
+        .build();
+  }
+
+  @Override
+  public ApiResponse like(Long userId, Long noteId) {
+    if (userId == null || userId < 0 || noteId == null || noteId < 0) {
+      throw new ApiException(Exceptions.INVALID_ID);
+    }
+
+    LikeKey likeKey = new LikeKey(userId, noteId);
+
+    likeDao
+        .getById(likeKey)
+        .ifPresentOrElse(like -> {
+          like.setUpdateDate(LocalDateTime.now());
+          like.setRecordState(RecordState.ACTIVE);
+          likeDao.save(like);
+        }, () -> {
+          Optional<User> userOpt = userDao.getById(userId);
+          if (userOpt.isEmpty()) {
+            throw new ApiException(Exceptions.USER_NOT_FOUND);
+          }
+          Optional<Note> noteOpt = noteDao.getById(noteId);
+          if (noteOpt.isEmpty()) {
+            throw new ApiException(Exceptions.NOTE_NOTE_FOUND);
+          }
+          likeDao.save(new Like(likeKey, userOpt.get(), noteOpt.get()));
+        });
+
+    return ApiResponse.builder()
+        .data("Successfully liked")
+        .status(HttpStatus.OK)
+        .build();
+  }
+
+  @Override
+  public ApiResponse unlike(Long userId, Long noteId) {
+    if (userId == null || userId < 0L || noteId == null || noteId < 0L) {
+      throw new ApiException(Exceptions.INVALID_ID);
+    }
+
+    likeDao
+        .getById(new LikeKey(userId, noteId))
+        .ifPresent(like -> {
+          like.setUpdateDate(LocalDateTime.now());
+          like.setRecordState(RecordState.DELETED);
+          likeDao.save(like);
+        });
+
+    return ApiResponse.builder()
+        .data("Successfully unliked")
+        .status(HttpStatus.OK)
         .build();
   }
 
