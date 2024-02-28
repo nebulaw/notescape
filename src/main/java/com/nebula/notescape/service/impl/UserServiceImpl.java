@@ -41,7 +41,7 @@ public class UserServiceImpl extends BaseService implements IUserService {
             Optional<User> userOptional = userDao.getById(id);
 
             if (userOptional.isEmpty()) {
-                throw new UserNotFoundException();
+                throw new ApiException(Exceptions.USER_NOT_FOUND);
             } else {
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)
@@ -155,9 +155,9 @@ public class UserServiceImpl extends BaseService implements IUserService {
     @Override
     public ApiResponse deleteById(Long id) {
         if (id == null || id < 1) {
-            throw new CustomMessageException("Invalid id provided", HttpStatus.BAD_REQUEST);
+            throw new ApiException(Exceptions.INVALID_ID);
         } else if (!userDao.existsById(id)) {
-            throw new UserNotFoundException();
+            throw new ApiException(Exceptions.USER_NOT_FOUND);
         } else {
             userDao.deleteById(id);
             log.info("Deleted user by id={}", id);
@@ -171,9 +171,9 @@ public class UserServiceImpl extends BaseService implements IUserService {
     @Override
     public ApiResponse deleteByUsername(String username) {
         if (!StringUtils.hasText(username)) {
-            throw new CustomMessageException("Invalid id provided", HttpStatus.BAD_REQUEST);
+            throw new ApiException(Exceptions.INVALID_ID);
         } else if (!userDao.existsByUsername(username)) {
-            throw new UserNotFoundException(username);
+            throw new ApiException(username + " was not found");
         } else {
             userDao.deleteByUsername(username);
             return ApiResponse.builder()

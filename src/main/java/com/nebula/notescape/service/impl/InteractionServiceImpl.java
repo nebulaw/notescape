@@ -182,7 +182,7 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
     likeDao
         .getById(likeKey)
-        .ifPresentOrElse(like -> {
+        .ifPresentOrElse((like) -> {
           like.setUpdateDate(LocalDateTime.now());
           like.setRecordState(RecordState.ACTIVE);
           likeDao.save(like);

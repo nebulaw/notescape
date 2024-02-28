@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.expression.ExpressionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,7 @@ public class NoteServiceImpl extends BaseService implements INoteService {
         .movieName(noteRequest.getMovieName())
         .noteType(noteRequest.getNoteType())
         .author(userOptional.orElseThrow(() ->
-            new UserNotFoundException(email)))
+            new ApiException(Exceptions.INVALID_EMAIL)))
         .context(noteRequest.getContext())
         .access(noteRequest.getAccess())
         .likeCount(0L)
@@ -80,15 +81,14 @@ public class NoteServiceImpl extends BaseService implements INoteService {
   public ApiResponse getById(Long id) {
     if (id == null || id < 1) {
       log.info("Invalid noteId='{}'", id);
-      throw new IncorrectParameterException()
-          .parameter("id", id);
+      throw new ApiException(Exceptions.INVALID_ID);
     } else {
       Optional<Note> noteOptional = noteDao.getById(id);
 
       return ApiResponse.builder()
           .status(HttpStatus.OK)
           .data(NoteResponse.of(noteOptional.orElseThrow(() ->
-              new NoteNotFoundException())))
+              new ApiException(Exceptions.NOTE_NOTE_FOUND))))
           .build();
     }
   }
@@ -144,19 +144,18 @@ public class NoteServiceImpl extends BaseService implements INoteService {
   @Override
   public ApiResponse getPrivateNotesByUserId(String token, Long userId, Integer page, Integer size, String[] sort) {
     if (!StringUtils.hasText(token)) {
-      throw new IncorrectParameterException()
-          .parameter("token", token);
+      throw new ApiException(Exceptions.INVALID_TOKEN);
     } else {
       Optional<User> userOptional = userDao.getById(userId);
       if (userOptional.isEmpty()) {
-        throw new UserNotFoundException();
+        throw new ApiException(Exceptions.USER_NOT_FOUND);
       }
       token = jwtUtil.parseToken(token);
       // validate user authority
       UserDetails userDetails = userDetailsService
           .loadUserByUsername(userOptional.get().getEmail());
       if (!jwtUtil.isValid(token, userDetails)) {
-        throw new CustomMessageException("Invalid or expired token", HttpStatus.BAD_REQUEST);
+        throw new ApiException(Exceptions.INVALID_TOKEN);
       }
 
       // create page
@@ -180,8 +179,7 @@ public class NoteServiceImpl extends BaseService implements INoteService {
   @Override
   public ApiResponse deleteById(String token, Long id) {
     if (id == null || id < 1) {
-      throw new IncorrectParameterException()
-          .parameter("id", id);
+      throw new ApiException(Exceptions.INVALID_ID);
     } else {
       token = jwtUtil.parseToken(token);
       String email = jwtUtil.parseToken(token);
@@ -189,7 +187,7 @@ public class NoteServiceImpl extends BaseService implements INoteService {
       Optional<Note> noteOptional = noteDao.getById(id);
       if (noteOptional.isEmpty()) {
         log.info("Note was not found by noteId={}", id);
-        throw new NoteNotFoundException();
+        throw new ApiException(Exceptions.NOTE_NOTE_FOUND);
       }
 
       String authorEmail = noteOptional.get().getAuthor().getEmail();
@@ -229,15 +227,12 @@ public class NoteServiceImpl extends BaseService implements INoteService {
 
     if (userOptional.isEmpty()) {
       if (userId >= 1L) {
-        throw new UserNotFoundException();
+        throw new ApiException(Exceptions.INVALID_ID);
       } else if (StringUtils.hasText(email) ||
           StringUtils.hasText(username)) {
-        throw new UserNotFoundException(
-            StringUtils.hasText(email) ? email : username);
+        throw new ApiException(username + " was not found");
       } else {
-        throw new CustomMessageException(
-            "You must provide userId, email, or username",
-            HttpStatus.BAD_REQUEST);
+        throw new ApiException("Username, email, or id was not provided");
       }
     }
 

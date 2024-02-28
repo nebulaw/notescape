@@ -1,12 +1,11 @@
 package com.nebula.notescape.security;
 
+import com.nebula.notescape.exception.ApiException;
 import com.nebula.notescape.exception.CustomMessageException;
-import com.nebula.notescape.exception.UserNotFoundException;
 import com.nebula.notescape.payload.request.LoginRequest;
 import com.nebula.notescape.payload.request.RegisterRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
 import com.nebula.notescape.payload.response.AuthResponse;
-import com.nebula.notescape.persistence.Authority;
 import com.nebula.notescape.persistence.dao.UserDao;
 import com.nebula.notescape.persistence.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +56,7 @@ public class AuthenticationService {
 
     if (userOptional.isEmpty()) {
       log.error("{} not found in the user repository", loginRequest.getEmail());
-      throw new UserNotFoundException(userDetails);
+      throw new ApiException(userDetails.getUsername() + " was not found.");
     } else {
       log.trace("Successfully retrieved {} from the user repository", loginRequest.getEmail());
       log.info("{} authenticated successfully", loginRequest.getEmail());

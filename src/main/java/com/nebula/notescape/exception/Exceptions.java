@@ -6,6 +6,7 @@ public class Exceptions {
   public static final String NOTE_NOTE_FOUND = "Note was not found";
   public static final String USER_ALREADY_EXISTS = "User already exists";
   public static final String INVALID_ID = "Invalid id was provided";
+  public static final String INVALID_TOKEN = "Invalid or expired token was provided";
   public static final String INVALID_FOLLOWER_ID = "Invalid follower id was provided";
   public static final String INVALID_FOLLOWING_ID = "Invalid following id was provided";
   public static final String INVALID_EMAIL = "Invalid email was provided";
