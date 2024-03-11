@@ -3,18 +3,14 @@ package com.nebula.notescape.service.impl;
 import com.nebula.notescape.exception.ApiException;
 import com.nebula.notescape.exception.Exceptions;
 import com.nebula.notescape.payload.response.ApiResponse;
+import com.nebula.notescape.payload.response.UserResponse;
 import com.nebula.notescape.persistence.RecordState;
 import com.nebula.notescape.persistence.UserRelationType;
-import com.nebula.notescape.persistence.dao.FollowDao;
-import com.nebula.notescape.persistence.dao.LikeDao;
-import com.nebula.notescape.persistence.dao.NoteDao;
-import com.nebula.notescape.persistence.dao.UserDao;
-import com.nebula.notescape.persistence.entity.Follow;
-import com.nebula.notescape.persistence.entity.Like;
-import com.nebula.notescape.persistence.entity.Note;
-import com.nebula.notescape.persistence.entity.User;
+import com.nebula.notescape.persistence.dao.*;
+import com.nebula.notescape.persistence.entity.*;
 import com.nebula.notescape.persistence.key.FollowKey;
 import com.nebula.notescape.persistence.key.LikeKey;
+import com.nebula.notescape.persistence.key.WatchKey;
 import com.nebula.notescape.service.BaseService;
 import com.nebula.notescape.service.IInteractionService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +28,7 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
   private final NoteDao noteDao;
   private final UserDao userDao;
   private final LikeDao likeDao;
+  private final WatchDao watchDao;
   private final FollowDao followDao;
 
   @Override
@@ -50,9 +47,9 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
       followOpt.ifPresent(follow -> {
         follow.setUpdateDate(LocalDateTime.now());
         follow.setRecordState(RecordState.ACTIVE);
-        User from = follow.getFrom();
+        User from = follow.getFollower();
         from.setFollowingCount(relu(from.getFollowingCount() + 1));
-        User to = follow.getTo();
+        User to = follow.getFollowing();
         to.setFollowerCount(relu(to.getFollowerCount() + 1));
         userDao.save(from);
         userDao.save(to);
@@ -81,6 +78,7 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
         .build();
   }
 
+  // This is a joke
   private Integer relu(Integer value) {
     return value <= 0 ? 0 : value;
   }
@@ -99,9 +97,9 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
         .ifPresent(follow -> {
           follow.setUpdateDate(LocalDateTime.now());
           follow.setRecordState(RecordState.DELETED);
-          User from = follow.getFrom();
+          User from = follow.getFollower();
           from.setFollowingCount(relu(from.getFollowingCount() - 1));
-          User to = follow.getTo();
+          User to = follow.getFollowing();
           to.setFollowerCount(relu(to.getFollowerCount() - 1));
           userDao.save(from);
           userDao.save(to);
@@ -150,7 +148,8 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
     Page<Follow> followPage = followDao
         .getFollowingsByUserId(id, createPageable(page, size, sort));
     return ApiResponse.builder()
-        .data(followPage.getContent())
+        .data(followPage.stream()
+            .map(follow -> UserResponse.of(follow.getFollowing())))
         .put("page", page)
         .put("totalPages", followPage.getTotalPages())
         .put("size", followPage.getContent().size())
@@ -165,10 +164,28 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
     Page<Follow> followPage = followDao
         .getFollowersByUserId(id, createPageable(page, size, sort));
     return ApiResponse.builder()
-        .data(followPage.getContent())
+        .data(followPage.stream()
+            .map(follow -> UserResponse.of(follow.getFollower()))
+            .toList())
         .put("page", page)
         .put("totalPages", followPage.getTotalPages())
         .put("size", followPage.getContent().size())
+        .build();
+  }
+
+  @Override
+  public ApiResponse getWatchListByUserId(Long userId, Integer page, Integer size, String[] sort) {
+    if (userId == null || userId < 0) {
+      throw new ApiException(Exceptions.INVALID_ID);
+    }
+
+    Page<Watch> watchPage = watchDao
+        .getWatchPageByUserId(userId, createPageable(page, size, sort));
+    return ApiResponse.builder()
+        .data(watchPage.stream()
+            .peek(watch -> watch.getUser().setPassword(""))
+            .toList())
+        .status(HttpStatus.OK)
         .build();
   }
 
@@ -220,6 +237,54 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
     return ApiResponse.builder()
         .data("Successfully unliked")
+        .status(HttpStatus.OK)
+        .build();
+  }
+
+  @Override
+  public ApiResponse watch(Long userId, Long movieId) {
+    if (userId == null || userId < 0L || movieId == null || movieId < 0L) {
+      throw new ApiException(Exceptions.INVALID_ID);
+    }
+
+    WatchKey watchKey = new WatchKey(userId, movieId);
+
+    watchDao
+        .getById(watchKey)
+        .ifPresentOrElse(watch -> {
+          watch.setRecordState(RecordState.ACTIVE);
+          watch.setUpdateDate(LocalDateTime.now());
+          watchDao.save(watch);
+        }, () -> {
+          Optional<User> userOpt = userDao.getById(userId);
+          if (userOpt.isEmpty()) {
+            throw new ApiException(Exceptions.USER_NOT_FOUND);
+          }
+          watchDao.save(new Watch(watchKey, userOpt.get()));
+        });
+
+    return ApiResponse.builder()
+        .data("Saved to watchlist")
+        .status(HttpStatus.OK)
+        .build();
+  }
+
+  @Override
+  public ApiResponse unwatch(Long userId, Long movieId) {
+    if (userId == null || userId < 0L || movieId == null || movieId < 0L) {
+      throw new ApiException(Exceptions.INVALID_ID);
+    }
+
+    watchDao
+        .getById(new WatchKey(userId, movieId))
+        .ifPresent(watch -> {
+          watch.setRecordState(RecordState.DELETED);
+          watch.setUpdateDate(LocalDateTime.now());
+          watchDao.save(watch);
+        });
+
+    return ApiResponse.builder()
+        .data("Removed from watchlist")
         .status(HttpStatus.OK)
         .build();
   }

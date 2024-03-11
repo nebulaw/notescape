@@ -14,8 +14,14 @@ public interface IInteractionService {
 
   ApiResponse getFollowersByUserId(Long id, Integer page, Integer size, String[] sort);
 
+  ApiResponse getWatchListByUserId(Long userId, Integer page, Integer size, String[] sort);
+
   ApiResponse like(Long userId, Long noteId);
 
   ApiResponse unlike(Long userId, Long noteId);
+
+  ApiResponse watch(Long userId, Long movieId);
+
+  ApiResponse unwatch(Long userId, Long movieId);
 
 }

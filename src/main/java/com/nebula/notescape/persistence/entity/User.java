@@ -6,6 +6,8 @@ import com.nebula.notescape.persistence.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
