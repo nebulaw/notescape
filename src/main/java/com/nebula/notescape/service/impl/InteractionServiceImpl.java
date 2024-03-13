@@ -11,6 +11,7 @@ import com.nebula.notescape.persistence.entity.*;
 import com.nebula.notescape.persistence.key.FollowKey;
 import com.nebula.notescape.persistence.key.LikeKey;
 import com.nebula.notescape.persistence.key.WatchKey;
+import com.nebula.notescape.persistence.key.WishKey;
 import com.nebula.notescape.service.BaseService;
 import com.nebula.notescape.service.IInteractionService;
 import lombok.RequiredArgsConstructor;
@@ -29,16 +30,19 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
   private final UserDao userDao;
   private final LikeDao likeDao;
   private final WatchDao watchDao;
+  private final WishDao wishDao;
   private final FollowDao followDao;
+
+  private void validateId(Long id) {
+    if (id == null || id < 1L) {
+      throw new ApiException(Exceptions.INVALID_ID);
+    }
+  }
 
   @Override
   public ApiResponse follow(Long followerId, Long followingId) {
-    if (followerId == null || followerId < 1L) {
-      throw new ApiException(Exceptions.INVALID_FOLLOWER_ID);
-    }
-    if (followingId == null || followingId < 1L) {
-      throw new ApiException(Exceptions.INVALID_FOLLOWING_ID);
-    }
+    validateId(followerId);
+    validateId(followingId);
 
     // check if exists
     if (followDao.existsById(new FollowKey(followerId, followingId))) {
@@ -85,12 +89,8 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
   @Override
   public ApiResponse unfollow(Long followerId, Long followingId) {
-    if (followerId == null || followerId < 1L) {
-      throw new ApiException(Exceptions.INVALID_FOLLOWER_ID);
-    }
-    if (followingId == null || followingId < 1L) {
-      throw new ApiException(Exceptions.INVALID_FOLLOWING_ID);
-    }
+    validateId(followerId);
+    validateId(followingId);
 
     followDao
         .getById(new FollowKey(followerId, followingId))
@@ -114,10 +114,8 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
   @Override
   public ApiResponse getRelationType(Long user1Id, Long user2Id) {
-    if (user1Id == null || user1Id < 1L ||
-        user2Id == null || user2Id < 1L) {
-      throw new ApiException(Exceptions.INVALID_ID);
-    }
+    validateId(user1Id);
+    validateId(user2Id);
 
     UserRelationType type = UserRelationType.NONE;
 
@@ -142,9 +140,7 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
   @Override
   public ApiResponse getFollowingsByUserId(Long id, Integer page, Integer size, String[] sort) {
-    if (id == null || id < 0) {
-      throw new ApiException(Exceptions.INVALID_ID);
-    }
+    validateId(id);
     Page<Follow> followPage = followDao
         .getFollowingsByUserId(id, createPageable(page, size, sort));
     return ApiResponse.builder()
@@ -158,9 +154,7 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
   @Override
   public ApiResponse getFollowersByUserId(Long id, Integer page, Integer size, String[] sort) {
-    if (id == null || id < 0) {
-      throw new ApiException(Exceptions.INVALID_ID);
-    }
+    validateId(id);
     Page<Follow> followPage = followDao
         .getFollowersByUserId(id, createPageable(page, size, sort));
     return ApiResponse.builder()
@@ -174,11 +168,8 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
   }
 
   @Override
-  public ApiResponse getWatchListByUserId(Long userId, Integer page, Integer size, String[] sort) {
-    if (userId == null || userId < 0) {
-      throw new ApiException(Exceptions.INVALID_ID);
-    }
-
+  public ApiResponse getWatchlistByUserId(Long userId, Integer page, Integer size, String[] sort) {
+    validateId(userId);
     Page<Watch> watchPage = watchDao
         .getWatchPageByUserId(userId, createPageable(page, size, sort));
     return ApiResponse.builder()
@@ -190,12 +181,37 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
   }
 
   @Override
+  public ApiResponse getWishlistByUserId(Long userId, Integer page, Integer size, String[] sort) {
+    validateId(userId);
+
+    Page<Wish> wishlistPage = wishDao
+        .getWishPageByUserId(userId, createPageable(page, size, sort));
+    return ApiResponse.builder()
+        .data(wishlistPage.stream()
+            .peek(wish -> wish.getUser().setPassword(""))
+            .toList())
+        .status(HttpStatus.OK)
+        .build();
+  }
+
+  @Override
   public ApiResponse like(Long userId, Long noteId) {
-    if (userId == null || userId < 0 || noteId == null || noteId < 0) {
-      throw new ApiException(Exceptions.INVALID_ID);
+    validateId(userId);
+    validateId(noteId);
+    LikeKey likeKey = new LikeKey(userId, noteId);
+
+    Optional<User> userOpt = userDao.getById(userId);
+    if (userOpt.isEmpty()) {
+      throw new ApiException(Exceptions.USER_NOT_FOUND);
     }
 
-    LikeKey likeKey = new LikeKey(userId, noteId);
+    Optional<Note> noteOpt = noteDao.getById(noteId);
+    if (noteOpt.isEmpty()) {
+      throw new ApiException(Exceptions.NOTE_NOTE_FOUND);
+    }
+    Note note = noteOpt.get();
+    note.setLikeCount(note.getLikeCount() + 1);
+    noteDao.update(note);
 
     likeDao
         .getById(likeKey)
@@ -203,17 +219,7 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
           like.setUpdateDate(LocalDateTime.now());
           like.setRecordState(RecordState.ACTIVE);
           likeDao.save(like);
-        }, () -> {
-          Optional<User> userOpt = userDao.getById(userId);
-          if (userOpt.isEmpty()) {
-            throw new ApiException(Exceptions.USER_NOT_FOUND);
-          }
-          Optional<Note> noteOpt = noteDao.getById(noteId);
-          if (noteOpt.isEmpty()) {
-            throw new ApiException(Exceptions.NOTE_NOTE_FOUND);
-          }
-          likeDao.save(new Like(likeKey, userOpt.get(), noteOpt.get()));
-        });
+        }, () -> likeDao.save(new Like(likeKey, userOpt.get(), noteOpt.get())));
 
     return ApiResponse.builder()
         .data("Successfully liked")
@@ -223,16 +229,24 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
   @Override
   public ApiResponse unlike(Long userId, Long noteId) {
-    if (userId == null || userId < 0L || noteId == null || noteId < 0L) {
-      throw new ApiException(Exceptions.INVALID_ID);
-    }
+    validateId(userId);
+    validateId(noteId);
 
     likeDao
         .getById(new LikeKey(userId, noteId))
         .ifPresent(like -> {
+          Optional<Note> noteOpt = noteDao.getById(noteId);
+          if (noteOpt.isEmpty()) {
+            return;
+          }
+          Note note = noteOpt.get();
+          note.setLikeCount(note.getLikeCount() == 0 ?
+              0 : note.getLikeCount() - 1);
+          System.out.println("Like count after unlike: " + note.getLikeCount());
           like.setUpdateDate(LocalDateTime.now());
           like.setRecordState(RecordState.DELETED);
           likeDao.save(like);
+          noteDao.update(note);
         });
 
     return ApiResponse.builder()
@@ -243,9 +257,8 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
   @Override
   public ApiResponse watch(Long userId, Long movieId) {
-    if (userId == null || userId < 0L || movieId == null || movieId < 0L) {
-      throw new ApiException(Exceptions.INVALID_ID);
-    }
+    validateId(userId);
+    validateId(movieId);
 
     WatchKey watchKey = new WatchKey(userId, movieId);
 
@@ -271,9 +284,8 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
 
   @Override
   public ApiResponse unwatch(Long userId, Long movieId) {
-    if (userId == null || userId < 0L || movieId == null || movieId < 0L) {
-      throw new ApiException(Exceptions.INVALID_ID);
-    }
+    validateId(userId);
+    validateId(movieId);
 
     watchDao
         .getById(new WatchKey(userId, movieId))
@@ -286,6 +298,50 @@ public class InteractionServiceImpl extends BaseService implements IInteractionS
     return ApiResponse.builder()
         .data("Removed from watchlist")
         .status(HttpStatus.OK)
+        .build();
+  }
+
+  @Override
+  public ApiResponse wish(Long userId, Long movieId) {
+    validateId(userId);
+    validateId(movieId);
+
+    wishDao
+        .getById(new WishKey(userId, movieId))
+        .ifPresentOrElse(wish -> {
+          wish.setRecordState(RecordState.ACTIVE);
+          wish.setUpdateDate(LocalDateTime.now());
+          wishDao.save(wish);
+        }, () -> {
+          Optional<User> userOpt = userDao.getById(userId);
+          if (userOpt.isEmpty()) {
+            throw new ApiException(Exceptions.USER_NOT_FOUND);
+          }
+          wishDao.save(new Wish(new WishKey(userId, movieId), userOpt.get()));
+        });
+
+    return ApiResponse.builder()
+        .status(HttpStatus.OK)
+        .data("Saved to wishlist")
+        .build();
+  }
+
+  @Override
+  public ApiResponse unwish(Long userId, Long movieId) {
+    validateId(userId);
+    validateId(movieId);
+
+    wishDao
+        .getById(new WishKey(userId, movieId))
+        .ifPresent(wish -> {
+          wish.setRecordState(RecordState.DELETED);
+          wish.setUpdateDate(LocalDateTime.now());
+          wishDao.save(wish);
+        });
+
+    return ApiResponse.builder()
+        .status(HttpStatus.OK)
+        .data("Removed from wishlist")
         .build();
   }
 

@@ -64,14 +64,24 @@ public class UserController {
     return interactionService.getFollowersByUserId(userId, page, size, sort);
   }
 
-  @GetMapping("/notes")
+  @GetMapping("/watched")
   public ApiResponse getWatchedMoviesByUserId(
       @RequestParam Long userId,
       @RequestParam(defaultValue = "1") Integer page,
       @RequestParam(defaultValue = "8") Integer size,
       @RequestParam(defaultValue = "createDate,desc") String[] sort
   ) {
-    return interactionService.getWatchListByUserId(userId, page, size, sort);
+    return interactionService.getWatchlistByUserId(userId, page, size, sort);
+  }
+
+  @GetMapping("/wishlist")
+  public ApiResponse getWishlistByUserId(
+      @RequestParam Long userId,
+      @RequestParam(defaultValue = "1") Integer page,
+      @RequestParam(defaultValue = "8") Integer size,
+      @RequestParam(defaultValue = "createDate,desc") String[] sort
+  ) {
+    return interactionService.getWishlistByUserId(userId, page, size, sort);
   }
 
 }

@@ -23,7 +23,7 @@ public class LikeDao implements Dao<Like, LikeKey> {
 
   @Override
   public Boolean existsById(LikeKey likeKey) {
-    return likeRepository.existsById(likeKey);
+    return likeRepository.existsByIdAndRecordState(likeKey, RecordState.ACTIVE);
   }
 
   @Override

@@ -1,5 +1,6 @@
 package com.nebula.notescape.persistence.repository;
 
+import com.nebula.notescape.persistence.RecordState;
 import com.nebula.notescape.persistence.entity.Like;
 import com.nebula.notescape.persistence.key.LikeKey;
 import org.springframework.data.domain.Page;
@@ -20,5 +21,7 @@ public interface LikeRepository extends
       "WHERE l.id.userId = :userId AND " +
       "l.recordState = 0")
   Page<Like> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
+
+  Boolean existsByIdAndRecordState(LikeKey id, RecordState recordState);
 
 }

@@ -1,14 +1,17 @@
 package com.nebula.notescape.service.impl;
 
-import com.nebula.notescape.exception.*;
+import com.nebula.notescape.exception.ApiException;
+import com.nebula.notescape.exception.Exceptions;
 import com.nebula.notescape.payload.request.NoteRequest;
 import com.nebula.notescape.payload.response.ApiResponse;
 import com.nebula.notescape.payload.response.NoteResponse;
 import com.nebula.notescape.persistence.Access;
+import com.nebula.notescape.persistence.dao.LikeDao;
 import com.nebula.notescape.persistence.dao.NoteDao;
 import com.nebula.notescape.persistence.dao.UserDao;
 import com.nebula.notescape.persistence.entity.Note;
 import com.nebula.notescape.persistence.entity.User;
+import com.nebula.notescape.persistence.key.LikeKey;
 import com.nebula.notescape.security.JwtUtil;
 import com.nebula.notescape.security.UserDetailsServiceImpl;
 import com.nebula.notescape.service.BaseService;
@@ -18,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.expression.ExpressionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,7 @@ public class NoteServiceImpl extends BaseService implements INoteService {
   private final UserDetailsServiceImpl userDetailsService;
   private final UserDao userDao;
   private final NoteDao noteDao;
+  private final LikeDao likeDao;
   private final JwtUtil jwtUtil;
 
   @Override
@@ -94,7 +97,8 @@ public class NoteServiceImpl extends BaseService implements INoteService {
   }
 
   @Override
-  public ApiResponse getAllNotesByUser(Long userId, String email, String username, Integer page, Integer size, String[] sort) {
+  public ApiResponse getAllNotesByUser(Long userId, String email, String username,
+                                       Integer page, Integer size, String[] sort) {
     User user = extractUserFromIdentifiers(userId, email, username);
 
     Pageable pageable = createPageable(page - 1, size, sort);
@@ -102,7 +106,11 @@ public class NoteServiceImpl extends BaseService implements INoteService {
         .getAllNotesByUser(user, pageable);
 
     return ApiResponse.builder()
-        .data(notePage.stream().map(NoteResponse::of).toList())
+        .data(notePage.stream()
+            .map(NoteResponse::of)
+            .peek(note -> note.setIsLiked(likeDao
+                .existsById(new LikeKey(user.getId(), note.getId()))))
+            .toList())
         .status(HttpStatus.OK)
         .put("page", page)
         .put("totalPages", notePage.getTotalPages())
@@ -111,7 +119,8 @@ public class NoteServiceImpl extends BaseService implements INoteService {
   }
 
   @Override
-  public ApiResponse getPublicNotesByUserId(Long id, String email, String username, Integer page, Integer size, String[] sort) {
+  public ApiResponse getPublicNotesByUserId(Long id, String email, String username,
+                                            Integer page, Integer size, String[] sort) {
     User user = extractUserFromIdentifiers(id, email, username);
 
     Pageable pageable = createPageable(page - 1, size, sort);
@@ -119,7 +128,11 @@ public class NoteServiceImpl extends BaseService implements INoteService {
         .getPublicNotesByUser(user, pageable);
 
     return ApiResponse.builder()
-        .data(notePage.stream().map(NoteResponse::of).toList())
+        .data(notePage.stream()
+            .map(NoteResponse::of)
+            .peek(note -> note.setIsLiked(
+                likeDao.existsById(new LikeKey(user.getId(), note.getId()))))
+            .toList())
         .status(HttpStatus.OK)
         .put("page", page)
         .put("totalPages", notePage.getTotalPages())
@@ -128,12 +141,17 @@ public class NoteServiceImpl extends BaseService implements INoteService {
   }
 
   @Override
-  public ApiResponse getPublicNotesByMovieId(Long movieId, Integer page, Integer size, String[] sort) {
+  public ApiResponse getPublicNotesByMovieId(Long movieId, Integer page,
+                                             Integer size, String[] sort) {
     Pageable pageable = createPageable(page - 1, size, sort);
     Page<Note> notePage = noteDao.getPublicNotesByMovieId(movieId, pageable);
 
     return ApiResponse.builder()
-        .data(notePage.stream().map(NoteResponse::of).toList())
+        .data(notePage.stream()
+            .map(NoteResponse::of)
+            .peek(note -> note.setIsLiked(likeDao
+                .existsById(new LikeKey(note.getAuthor().getId(), note.getId()))))
+            .toList())
         .status(HttpStatus.OK)
         .put("page", page)
         .put("totalPages", notePage.getTotalPages())
@@ -142,7 +160,8 @@ public class NoteServiceImpl extends BaseService implements INoteService {
   }
 
   @Override
-  public ApiResponse getPrivateNotesByUserId(String token, Long userId, Integer page, Integer size, String[] sort) {
+  public ApiResponse getPrivateNotesByUserId(String token, Long userId, Integer page,
+                                             Integer size, String[] sort) {
     if (!StringUtils.hasText(token)) {
       throw new ApiException(Exceptions.INVALID_TOKEN);
     } else {
@@ -166,6 +185,8 @@ public class NoteServiceImpl extends BaseService implements INoteService {
       return ApiResponse.builder()
           .data(notePage.stream()
               .map(NoteResponse::of)
+              .peek(note -> note.setIsLiked(likeDao
+                  .existsById(new LikeKey(userOptional.get().getId(), note.getId()))))
               .toList())
           .status(HttpStatus.OK)
           .put("page", page)
