@@ -1,8 +1,6 @@
 # Notescape
 
-Back-end service for Notescape written in Java Spring Framework.
-
-### About
-Notescape is a platform to interact with movies, take notes
-about and share them with people.
+Notescape - platform that brings film enthusiasts together. It is designed to
+be relatively easy and is oriented to motivate people discover new movies and
+make friends around any topic.
 
