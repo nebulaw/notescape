@@ -1,11 +1,29 @@
-HELP.md
-TODO.md
-target/
+
+# custom stuff
+notescape-admin/
+**/HELP.md
+**/TODO.md
+
+# next app
+frontend/node_modules/
+frontend/next-env*
+frontend/*.lock
+frontend/.npm/
+frontend/.next/
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/pids
+frontend/*.pid
+frontend/*.seed
+frontend/build/Release
+
+**/target/
+**/.mvn/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-
-src/main/resources/application.yml
+**/src/**/application*
 
 ### STS ###
 .apt_generated
@@ -17,20 +35,10 @@ src/main/resources/application.yml
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
